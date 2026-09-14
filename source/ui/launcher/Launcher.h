@@ -129,6 +129,9 @@ private:
     void setupStarred();
     void setupSearch();
     void setupFAB();
+    void setupMd3Chrome();
+    void showMd3CreateSheet();
+    void positionMd3Fab();
     void applyStyle();
     void updateNavigationState();
     bool isDarkMode() const;
