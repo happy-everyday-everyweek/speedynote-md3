@@ -115,6 +115,14 @@ inline QColor folderSeparator(bool dark){ return dark ? QColor(0x3a, 0x3a, 0x3a)
  */
 inline void styleMenu(QMenu* menu, bool dark) {
     if (!menu) return;
+
+#ifdef Q_OS_ANDROID
+    // Material Design 3 menu styling on Android; the legacy gray palette is
+    // replaced app-wide, so every QMenu switches over here.
+    Md3::Menus::style(menu);
+    Q_UNUSED(dark);
+    return;
+#endif
     
     // Required for true rounded corners on Linux/X11
     menu->setWindowFlags(menu->windowFlags() | Qt::FramelessWindowHint);
