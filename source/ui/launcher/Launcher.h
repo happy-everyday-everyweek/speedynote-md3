@@ -20,6 +20,13 @@ class SearchView;
 class FloatingActionButton;
 class ExportProgressWidget;
 
+namespace Md3 {
+class TopAppBar;
+class NavigationBar;
+class Fab;
+class BottomSheet;
+}
+
 /**
  * @brief The main launcher window for SpeedyNote.
  * 
