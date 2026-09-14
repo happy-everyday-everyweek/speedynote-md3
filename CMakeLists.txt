@@ -995,6 +995,7 @@ set(UI_SOURCES
     source/ui/md3/Md3NavigationBar.cpp
     source/ui/md3/Md3Snackbar.cpp
     source/ui/md3/Md3Menu.cpp
+    source/ui/md3/Md3BottomSheet.cpp
     source/ui/md3/Md3Switch.cpp
 )
 
