@@ -4,6 +4,8 @@
 #include <QColor>
 #include <QMenu>
 
+#include "md3/Md3Menu.h"
+
 /**
  * @brief Unified color palette for consistent theming across the application.
  * 
