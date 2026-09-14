@@ -821,6 +821,11 @@ void Launcher::switchToView(View view)
     }
     
     updateNavigationState();
+
+    if (m_md3BottomNav) {
+        const int index = (view == View::Timeline) ? 0 : (view == View::Starred) ? 1 : 2;
+        m_md3BottomNav->setCurrentIndex(index, true);
+    }
 }
 
 void Launcher::updateNavigationState()
