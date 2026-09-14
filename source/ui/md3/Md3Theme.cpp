@@ -326,6 +326,60 @@ QString Theme::applicationStyleSheet() const
     return qss;
 }
 
+QString Theme::toolbarStyleSheet() const
+{
+    const Md3ColorScheme &c = m_color;
+
+    auto fade = [](const QColor &color, qreal alpha) {
+        QColor cc = color;
+        cc.setAlphaF(alpha);
+        return QStringLiteral("rgba(%1, %2, %3, %4)")
+            .arg(cc.red())
+            .arg(cc.green())
+            .arg(cc.blue())
+            .arg(QString::number(cc.alphaF(), 'f', 3));
+    };
+
+    return QStringLiteral(
+               "QPushButton#ActionButton, QPushButton#ToggleButton,"
+               "QPushButton#ThreeStateButton, QPushButton#ToolButton {"
+               "  border: none;"
+               "  border-radius: 18px;"
+               "  background: transparent;"
+               "  padding: 0px;"
+               "}"
+               "QPushButton#ActionButton:hover, QPushButton#ToggleButton:hover,"
+               "QPushButton#ThreeStateButton:hover, QPushButton#ToolButton:hover {"
+               "  background: %1;"
+               "}"
+               "QPushButton#ActionButton:pressed, QPushButton#ToggleButton:pressed,"
+               "QPushButton#ThreeStateButton:pressed, QPushButton#ToolButton:pressed {"
+               "  background: %2;"
+               "}"
+               "QPushButton#ToggleButton:checked, QPushButton#ToolButton:checked {"
+               "  background: %3;"
+               "}"
+               "QPushButton#ToggleButton:checked:hover, QPushButton#ToolButton:checked:hover {"
+               "  background: %4;"
+               "}"
+               "QPushButton#ToolButton[inExpandable=\"true\"]:checked,"
+               "QPushButton#ToolButton[inExpandable=\"true\"]:checked:hover {"
+               "  background: transparent;"
+               "  border: none;"
+               "}"
+               "QPushButton#ThreeStateButton[state=\"0\"] { background: transparent; }"
+               "QPushButton#ThreeStateButton[state=\"1\"] { background: %5; }"
+               "QPushButton#ThreeStateButton[state=\"1\"]:hover { background: %6; }"
+               "QPushButton#ThreeStateButton[state=\"2\"] { background: %3; }"
+               "QPushButton#ThreeStateButton[state=\"2\"]:hover { background: %4; }")
+        .arg(fade(c.onSurface, 0.08),
+             fade(c.onSurface, 0.10),
+             c.secondaryContainer.name(),
+             c.secondaryContainer.darker(108).name(),
+             fade(c.errorContainer, 0.85),
+             fade(c.errorContainer, 1.0));
+}
+
 void Theme::load()
 {
     QSettings settings(QStringLiteral("SpeedyNote"), QStringLiteral("App"));
