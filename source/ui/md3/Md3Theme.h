@@ -85,6 +85,10 @@ public:
     /// (inputs, buttons, tabs, sliders, progress, dialogs).
     QString applicationStyleSheet() const;
 
+    /// Stylesheet for the editor's ToolbarButton family (icon buttons in the
+    /// navigation bar, tool dock, subtoolbars and action bars).
+    QString toolbarStyleSheet() const;
+
     // --- Persistence -------------------------------------------------------
 
     /// Load seed/variant/contrast from QSettings ("SpeedyNote"/"App").
