@@ -993,6 +993,8 @@ set(UI_SOURCES
     source/ui/md3/Md3IconUtils.cpp
     source/ui/md3/Md3TopAppBar.cpp
     source/ui/md3/Md3NavigationBar.cpp
+    source/ui/md3/Md3Snackbar.cpp
+    source/ui/md3/Md3Menu.cpp
     source/ui/md3/Md3Switch.cpp
 )
 
