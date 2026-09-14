@@ -7,6 +7,8 @@
 
 #include "Md3Theme.h"
 
+class QVariantAnimation;
+
 namespace Md3 {
 
 class Ripple;
