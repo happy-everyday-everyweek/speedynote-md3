@@ -619,6 +619,19 @@ void Launcher::setupSearch()
 
 void Launcher::setupFAB()
 {
+    if (m_md3) {
+        m_md3Fab = new Md3::Fab(m_centralWidget);
+        m_md3Fab->setColorRole(Md3::Fab::PrimaryContainer);
+        m_md3Fab->setIcon(Md3::Icons::tintedFromResource(
+            QStringLiteral(":/resources/icons/addtab.png"),
+            Md3::Theme::instance().colors().onPrimaryContainer, 24));
+        connect(m_md3Fab, &Md3::Fab::clicked, this, [this]() { showMd3CreateSheet(); });
+        m_md3Fab->resize(m_md3Fab->sizeHint());
+        m_md3Fab->raise();
+        m_md3Fab->show();
+        return;
+    }
+
     // Create FAB on central widget so it overlays content
     m_fab = new FloatingActionButton(m_centralWidget);
     
