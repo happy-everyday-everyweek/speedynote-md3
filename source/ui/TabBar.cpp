@@ -1,4 +1,5 @@
 #include "TabBar.h"
+#include "md3/Md3Theme.h"
 #include "StyleLoader.h"
 #include <QGuiApplication>
 #include <QPalette>
@@ -261,11 +262,23 @@ void TabBar::updateTheme(bool darkMode, const QColor &accentColor)
 {
     // Use system window color for selected tab (follows KDE/system theme)
     QPalette sysPalette = QGuiApplication::palette();
+#ifdef Q_OS_ANDROID
+    QColor selectedBg = Md3::Theme::instance().colors().surface;
+#else
     QColor selectedBg = sysPalette.color(QPalette::Window);
+#endif
+#ifdef Q_OS_ANDROID
+    QColor textColor = Md3::Theme::instance().colors().onSurface;
+#else
     QColor textColor = sysPalette.color(QPalette::WindowText);
+#endif
     
     // Washed out accent: lighter and desaturated for inactive tabs
+#ifdef Q_OS_ANDROID
+    QColor washedColor = Md3::Theme::instance().colors().surfaceContainerHigh;
+#else
     QColor washedColor = accentColor;
+#endif
     if (darkMode) {
         // Dark mode: darken and desaturate
         washedColor = washedColor.darker(120);
@@ -281,12 +294,20 @@ void TabBar::updateTheme(bool darkMode, const QColor &accentColor)
     }
     
     // Hover color: between washed and full accent
+#ifdef Q_OS_ANDROID
+    QColor hoverColor = Md3::Theme::instance().colors().surfaceContainerHighest;
+#else
     QColor hoverColor = darkMode ? accentColor.darker(105) : accentColor.lighter(115);
+#endif
     
     // Load stylesheet from QSS file with placeholder substitution
     QString tabStylesheet = StyleLoader::loadTabStylesheet(
         darkMode,
+#ifdef Q_OS_ANDROID
+        Md3::Theme::instance().colors().surfaceContainer, // Tab bar background
+#else
         accentColor,    // Tab bar background
+#endif
         washedColor,    // Inactive tab background
         textColor,      // Text color
         selectedBg,     // Selected tab background
