@@ -6,6 +6,9 @@
 
 #include "Md3Theme.h"
 
+class QVariantAnimation;
+class QTimer;
+
 namespace Md3 {
 
 /**
