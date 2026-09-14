@@ -15,6 +15,7 @@
 
 #include "MainWindow.h"
 #include "ui/launcher/Launcher.h"
+#include "ui/md3/Md3Theme.h"
 #include "platform/SystemNotification.h"
 #include "core/DocumentViewport.h"
 // CLI support (Desktop only)
@@ -919,6 +920,13 @@ int main(int argc, char* argv[])
     logAndroidPaths();
     applyAndroidPalette(app);
     applyAndroidFonts(app);
+
+    // Material Design 3 theme layer: rebuild the palette from the seed
+    // color (tonal palettes) and apply the app-wide MD3 stylesheet.
+    Md3::Theme::instance().load();
+    Md3::Theme::instance().setDarkMode(isAndroidDarkMode());
+    Md3::Theme::instance().applyToApplication(&app);
+    app.setStyleSheet(Md3::Theme::instance().applicationStyleSheet());
 #elif defined(Q_OS_IOS)
     IOSPlatformHelper::applyPalette(app);
     IOSPlatformHelper::applyFonts(app);
