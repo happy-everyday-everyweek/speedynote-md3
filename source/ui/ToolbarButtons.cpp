@@ -1,4 +1,5 @@
 #include "ToolbarButtons.h"
+#include "md3/Md3Theme.h"
 #include <QMouseEvent>
 #include <QFile>
 #include <QTextStream>
@@ -16,6 +17,11 @@ void ButtonStyles::applyToWidget(QWidget *widget, bool darkMode)
 
 QString ButtonStyles::getStylesheet(bool darkMode)
 {
+#ifdef Q_OS_ANDROID
+    // MD3 styling for the ToolbarButton family on Android.
+    Q_UNUSED(darkMode);
+    return Md3::Theme::instance().toolbarStyleSheet();
+#endif
     QString path = darkMode 
         ? ":/resources/styles/buttons_dark.qss"
         : ":/resources/styles/buttons.qss";
