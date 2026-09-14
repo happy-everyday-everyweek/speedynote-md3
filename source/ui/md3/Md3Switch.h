@@ -5,10 +5,11 @@
 
 #include "Md3Theme.h"
 
+class QVariantAnimation;
+
 namespace Md3 {
 
 class Ripple;
-class QVariantAnimation;
 
 /**
  * Material Design 3 switch.
