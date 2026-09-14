@@ -931,6 +931,7 @@ void Launcher::resizeEvent(QResizeEvent* event)
     if (m_fab) {
         m_fab->positionInParent();
     }
+    positionMd3Fab();
     
     // Trigger compact mode for navigation buttons when:
     // 1. Window width < 768px (narrow window), OR
