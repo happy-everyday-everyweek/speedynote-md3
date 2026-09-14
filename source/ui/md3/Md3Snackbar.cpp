@@ -57,8 +57,8 @@ Snackbar::~Snackbar()
     }
 }
 
-void Snackbar::show(QWidget *host, const QString &message, const QString &actionText,
-                    std::function<void()> action, int durationMs)
+void Snackbar::showMessage(QWidget *host, const QString &message, const QString &actionText,
+                           std::function<void()> action, int durationMs)
 {
     if (!host) {
         return;
