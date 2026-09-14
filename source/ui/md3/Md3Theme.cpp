@@ -162,6 +162,170 @@ QString Theme::baseStyleSheet() const
     return tooltip + scrollbars;
 }
 
+QString Theme::applicationStyleSheet() const
+{
+    const Md3ColorScheme &c = m_color;
+
+    auto fade = [](const QColor &color, qreal alpha) {
+        QColor cc = color;
+        cc.setAlphaF(alpha);
+        return QStringLiteral("rgba(%1, %2, %3, %4)")
+            .arg(cc.red())
+            .arg(cc.green())
+            .arg(cc.blue())
+            .arg(QString::number(cc.alphaF(), 'f', 3));
+    };
+
+    const QString onSurface = c.onSurface.name();
+    const QString onSurfaceVariant = c.onSurfaceVariant.name();
+    const QString primary = c.primary.name();
+    const QString onPrimary = c.onPrimary.name();
+    const QString surface = c.surface.name();
+    const QString surfaceContainer = c.surfaceContainer.name();
+    const QString surfaceContainerHigh = c.surfaceContainerHigh.name();
+    const QString surfaceContainerHighest = c.surfaceContainerHighest.name();
+    const QString secondaryContainer = c.secondaryContainer.name();
+    const QString onSecondaryContainer = c.onSecondaryContainer.name();
+    const QString outlineVariant = c.outlineVariant.name();
+
+    const QColor buttonHover = c.secondaryContainer.darker(108);
+    const QColor buttonPressed = c.secondaryContainer.darker(116);
+
+    QString qss = baseStyleSheet();
+
+    // Text inputs.
+    qss += QStringLiteral(
+               "QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {"
+               "  background-color: %1;"
+               "  color: %2;"
+               "  border: 1px solid %3;"
+               "  border-radius: 8px;"
+               "  padding: 8px 12px;"
+               "  selection-background-color: %4;"
+               "  selection-color: %5;"
+               "}"
+               "QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus,"
+               "QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {"
+               "  border: 2px solid %4;"
+               "}"
+               "QLineEdit:disabled, QPlainTextEdit:disabled, QTextEdit:disabled,"
+               "QComboBox:disabled {"
+               "  color: %6;"
+               "  background-color: %7;"
+               "}"
+               "QComboBox::drop-down { border: none; width: 28px; }"
+               "QComboBox QAbstractItemView {"
+               "  background-color: %8;"
+               "  color: %2;"
+               "  border: 1px solid %3;"
+               "  selection-background-color: %9;"
+               "  outline: none;"
+               "}")
+        .arg(surfaceContainerHigh,
+             onSurface,
+             outlineVariant,
+             primary,
+             onPrimary,
+             fade(c.onSurface, 0.38),
+             fade(c.onSurface, 0.12),
+             surfaceContainer,
+             fade(c.onSurface, 0.10));
+
+    // Buttons & tool buttons (generic fallback for legacy widgets; the MD3
+    // component library paints itself and is unaffected).
+    qss += QStringLiteral(
+               "QPushButton {"
+               "  background-color: %1;"
+               "  color: %2;"
+               "  border: none;"
+               "  border-radius: 20px;"
+               "  padding: 8px 20px;"
+               "  font-size: 14px;"
+               "}"
+               "QPushButton:hover { background-color: %3; }"
+               "QPushButton:pressed { background-color: %4; }"
+               "QPushButton:disabled { color: %5; background-color: %6; }"
+               "QPushButton:flat { background-color: transparent; }"
+               "QToolButton {"
+               "  background: transparent;"
+               "  border: none;"
+               "  border-radius: 8px;"
+               "  padding: 4px;"
+               "  color: %7;"
+               "}"
+               "QToolButton:hover { background-color: %8; }"
+               "QToolButton:pressed { background-color: %9; }")
+        .arg(secondaryContainer,
+             onSecondaryContainer,
+             buttonHover.name(),
+             buttonPressed.name(),
+             fade(c.onSurface, 0.38),
+             fade(c.onSurface, 0.12),
+             onSurface,
+             fade(c.onSurface, 0.08),
+             fade(c.onSurface, 0.10));
+
+    // Containers, dialogs and tabs.
+    qss += QStringLiteral(
+               "QGroupBox {"
+               "  border: 1px solid %1;"
+               "  border-radius: 12px;"
+               "  margin-top: 14px;"
+               "  padding-top: 10px;"
+               "  color: %2;"
+               "}"
+               "QGroupBox::title {"
+               "  subcontrol-origin: margin;"
+               "  left: 12px;"
+               "  padding: 0 4px;"
+               "  color: %3;"
+               "}"
+               "QDialog, QMessageBox, QInputDialog { background-color: %4; }"
+               "QTabWidget::pane { border: none; }"
+               "QTabBar::tab {"
+               "  background: transparent;"
+               "  color: %5;"
+               "  padding: 8px 16px;"
+               "  border-radius: 16px;"
+               "  margin: 2px 4px;"
+               "}"
+               "QTabBar::tab:selected {"
+               "  background-color: %6;"
+               "  color: %7;"
+               "}")
+        .arg(outlineVariant,
+             onSurface,
+             primary,
+             surface,
+             onSurfaceVariant,
+             secondaryContainer,
+             onSecondaryContainer);
+
+    // Sliders & progress indicators.
+    qss += QStringLiteral(
+               "QSlider::groove:horizontal { height: 4px; background: %1; border-radius: 2px; }"
+               "QSlider::sub-page:horizontal { background: %2; border-radius: 2px; }"
+               "QSlider::handle:horizontal {"
+               "  background: %2; width: 16px; height: 16px; margin: -6px 0; border-radius: 8px;"
+               "}"
+               "QSlider::groove:vertical { width: 4px; background: %1; border-radius: 2px; }"
+               "QSlider::sub-page:vertical { background: %2; border-radius: 2px; }"
+               "QSlider::handle:vertical {"
+               "  background: %2; height: 16px; margin: 0 -6px; border-radius: 8px;"
+               "}"
+               "QProgressBar {"
+               "  background-color: %1;"
+               "  border: none;"
+               "  border-radius: 2px;"
+               "  max-height: 4px;"
+               "}"
+               "QProgressBar::chunk { background-color: %2; border-radius: 2px; }")
+        .arg(surfaceContainerHighest,
+             primary);
+
+    return qss;
+}
+
 void Theme::load()
 {
     QSettings settings(QStringLiteral("SpeedyNote"), QStringLiteral("App"));
