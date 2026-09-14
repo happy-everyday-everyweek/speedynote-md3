@@ -954,6 +954,14 @@ void Launcher::showEvent(QShowEvent* event)
     if (m_returnBtn) {
         m_returnBtn->setVisible(hasMainWindow);
     }
+    if (m_md3TopBar) {
+        m_md3TopBar->setNavigationIcon(
+            hasMainWindow
+                ? Md3::Icons::tintedFromResource(QStringLiteral(":/resources/icons/left_arrow.png"),
+                                                 Md3::Theme::instance().colors().onSurfaceVariant, 24)
+                : QIcon(),
+            tr("Return"));
+    }
     
     // Refresh timeline if date has changed since last shown
     // This handles scenarios like system sleep/hibernate during midnight
