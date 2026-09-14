@@ -830,6 +830,11 @@ void Launcher::switchToView(View view)
 
 void Launcher::updateNavigationState()
 {
+    if (m_md3) {
+        // The MD3 bottom navigation keeps its own selection state.
+        return;
+    }
+
     // Update button checked states
     m_timelineBtn->setChecked(m_currentView == View::Timeline);
     m_starredBtn->setChecked(m_currentView == View::Starred);
