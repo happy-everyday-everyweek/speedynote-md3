@@ -81,6 +81,10 @@ public:
     /// Global stylesheet for generic Qt widgets (tool tip, scroll bars).
     QString baseStyleSheet() const;
 
+    /// App-wide stylesheet: base + MD3 styling for common Qt widgets
+    /// (inputs, buttons, tabs, sliders, progress, dialogs).
+    QString applicationStyleSheet() const;
+
     // --- Persistence -------------------------------------------------------
 
     /// Load seed/variant/contrast from QSettings ("SpeedyNote"/"App").
