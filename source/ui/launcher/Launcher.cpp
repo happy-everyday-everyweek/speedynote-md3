@@ -843,6 +843,10 @@ void Launcher::updateNavigationState()
 
 void Launcher::setNavigationCompact(bool compact)
 {
+    if (m_md3) {
+        return;
+    }
+
     m_returnBtn->setCompact(compact);
     m_timelineBtn->setCompact(compact);
     m_starredBtn->setCompact(compact);
