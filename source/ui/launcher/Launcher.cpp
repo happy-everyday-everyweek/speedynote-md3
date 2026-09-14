@@ -59,6 +59,7 @@
 #include <QStandardPaths>
 #include <QEventLoop>
 #include <QTimer>
+#include <functional>
 #include <QWindow>  // For windowHandle()->setWindowState() in transitions
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
 #include <QDragEnterEvent>
