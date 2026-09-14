@@ -724,7 +724,7 @@ void Launcher::showMd3CreateSheet()
         lay->setContentsMargins(0, 0, 0, 4);
         lay->setSpacing(4);
 
-        const Md3ColorScheme& c = Md3::Theme::instance().colors();
+        const Md3::Md3ColorScheme& c = Md3::Theme::instance().colors();
 
         auto addRow = [&](const QString& iconPath, const QString& text,
                           std::function<void()> action) {
