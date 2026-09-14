@@ -688,6 +688,13 @@ endif()
 # miniz: ZIP library for .snbx package export/import (MIT license)
 include_directories(${CMAKE_SOURCE_DIR}/thirdparty/miniz)
 
+# material-color-utilities: M3 tonal palettes + dynamic color (Apache-2.0).
+# Compiled directly into the application target (appended to APP_SOURCES
+# after the "Main Application Sources" block below).
+include_directories("${CMAKE_SOURCE_DIR}/thirdparty/material-color-utilities")
+file(GLOB_RECURSE MCU_SOURCES "${CMAKE_SOURCE_DIR}/thirdparty/material-color-utilities/cpp/*.cc")
+list(FILTER MCU_SOURCES EXCLUDE REGEX "_test\\.cc$")
+
 # ============================================================================
 # Translation Files
 # Auto-discover all app_*.ts files so new community-contributed languages are
@@ -976,6 +983,17 @@ set(UI_SOURCES
     source/ui/launcher/SearchView.cpp
     source/ui/launcher/FloatingActionButton.cpp
     source/ui/launcher/FolderPickerDialog.cpp
+    # Material Design 3 UI layer (custom-painted M3 components)
+    source/ui/md3/Md3ColorScheme.cpp
+    source/ui/md3/Md3Theme.cpp
+    source/ui/md3/Md3Ripple.cpp
+    source/ui/md3/Md3Button.cpp
+    source/ui/md3/Md3IconButton.cpp
+    source/ui/md3/Md3Fab.cpp
+    source/ui/md3/Md3IconUtils.cpp
+    source/ui/md3/Md3TopAppBar.cpp
+    source/ui/md3/Md3NavigationBar.cpp
+    source/ui/md3/Md3Switch.cpp
 )
 
 # PDF abstraction layer
@@ -1110,6 +1128,7 @@ set(APP_SOURCES
     ${BATCH_SOURCES}
     ${CLI_SOURCES}
     ${PLATFORM_SOURCES}
+    ${MCU_SOURCES}
     ${ANDROID_PLATFORM_SOURCES}
     ${IOS_PLATFORM_SOURCES}
     ${MACOS_PLATFORM_SOURCES}
