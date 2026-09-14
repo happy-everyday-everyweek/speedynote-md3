@@ -10,6 +10,13 @@
 #include "FloatingActionButton.h"
 #include "FolderPickerDialog.h"
 #include "../ThemeColors.h"
+#include "../md3/Md3BottomSheet.h"
+#include "../md3/Md3Button.h"
+#include "../md3/Md3Fab.h"
+#include "../md3/Md3IconUtils.h"
+#include "../md3/Md3NavigationBar.h"
+#include "../md3/Md3Theme.h"
+#include "../md3/Md3TopAppBar.h"
 #include "../dialogs/BatchExportDialog.h"
 #include "../dialogs/ExportResultsDialog.h"
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
