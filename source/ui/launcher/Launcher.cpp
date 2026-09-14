@@ -675,6 +675,101 @@ void Launcher::setupFAB()
     });
 }
 
+void Launcher::setupMd3Chrome()
+{
+    m_md3TopBar = new Md3::TopAppBar(m_centralWidget);
+    m_md3TopBar->setTitle(tr("SpeedyNote"));
+    m_md3TopBar->setNavigationIcon(
+        Md3::Icons::tintedFromResource(QStringLiteral(":/resources/icons/left_arrow.png"),
+                                       Md3::Theme::instance().colors().onSurfaceVariant, 24),
+        tr("Return"));
+    connect(m_md3TopBar, &Md3::TopAppBar::navigationClicked, this, [this]() {
+        MainWindow* mainWindow = MainWindow::findExistingMainWindow();
+        if (!mainWindow) {
+            return;
+        }
+        mainWindow->setWindowState(Qt::WindowNoState);
+        if (QWindow* win = mainWindow->windowHandle()) {
+            win->setWindowState(Qt::WindowNoState);
+        }
+        mainWindow->show();
+        mainWindow->raise();
+        mainWindow->activateWindow();
+        hideWithAnimation();
+    });
+
+    m_md3BottomNav = new Md3::NavigationBar(m_centralWidget);
+    m_md3BottomNav->addItem(QIcon(QStringLiteral(":/resources/icons/scroll.png")), tr("Timeline"));
+    m_md3BottomNav->addItem(QIcon(QStringLiteral(":/resources/icons/star.png")), tr("Starred"));
+    m_md3BottomNav->addItem(QIcon(QStringLiteral(":/resources/icons/zoom.png")), tr("Search"));
+    connect(m_md3BottomNav, &Md3::NavigationBar::itemClicked, this, [this](int index) {
+        switch (index) {
+        case 0: switchToView(View::Timeline); break;
+        case 1: switchToView(View::Starred); break;
+        case 2: switchToView(View::Search); break;
+        default: break;
+        }
+    });
+}
+
+void Launcher::showMd3CreateSheet()
+{
+    if (!m_md3FabSheet) {
+        m_md3FabSheet = new Md3::BottomSheet(this);
+        m_md3FabSheet->setTitle(tr("Create"));
+        m_md3FabSheet->setClosable(true);
+
+        auto* content = new QWidget(m_md3FabSheet);
+        auto* lay = new QVBoxLayout(content);
+        lay->setContentsMargins(0, 0, 0, 4);
+        lay->setSpacing(4);
+
+        const Md3ColorScheme& c = Md3::Theme::instance().colors();
+
+        auto addRow = [&](const QString& iconPath, const QString& text,
+                          std::function<void()> action) {
+            auto* row = new Md3::Button(text, Md3::Button::Text, content);
+            row->setSize(Md3::Button::Large);
+            row->setLeadingIcon(Md3::Icons::tintedFromResource(iconPath, c.primary, 24));
+            connect(row, &Md3::Button::clicked, this, [this, action]() {
+                m_md3FabSheet->close();
+                action();
+            });
+            lay->addWidget(row);
+        };
+
+        addRow(QStringLiteral(":/resources/icons/bookpage.png"), tr("Paged notebook"),
+               [this]() { emit createNewPaged(); });
+        addRow(QStringLiteral(":/resources/icons/borders.png"), tr("Edgeless canvas"),
+               [this]() { emit createNewEdgeless(); });
+        addRow(QStringLiteral(":/resources/icons/pdf.png"), tr("Annotate PDF"),
+               [this]() { emit openPdfRequested(); });
+        addRow(QStringLiteral(":/resources/icons/import.png"), tr("Import package"), [this]() {
+#ifdef Q_OS_ANDROID
+            QStringList packagePaths = pickSnbxFilesAndroid();
+            if (!packagePaths.isEmpty()) {
+                performBatchImport(packagePaths);
+            }
+#endif
+        });
+
+        m_md3FabSheet->setContentWidget(content);
+    }
+    m_md3FabSheet->open();
+}
+
+void Launcher::positionMd3Fab()
+{
+    if (!m_md3 || !m_md3Fab) {
+        return;
+    }
+    m_md3Fab->resize(m_md3Fab->sizeHint());
+    const int navHeight = m_md3BottomNav ? m_md3BottomNav->height() : 0;
+    m_md3Fab->move(width() - m_md3Fab->width() - 8,
+                   height() - navHeight - m_md3Fab->height() - 8);
+    m_md3Fab->raise();
+}
+
 bool Launcher::isDarkMode() const
 {
     const QPalette& pal = QApplication::palette();
