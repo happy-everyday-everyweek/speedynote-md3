@@ -780,6 +780,14 @@ bool Launcher::isDarkMode() const
 
 void Launcher::applyStyle()
 {
+    if (m_md3) {
+        // The app-wide MD3 stylesheet covers common widgets, and the MD3
+        // components paint themselves; only the window background is local.
+        setStyleSheet(QStringLiteral("Launcher { background: %1; }")
+                          .arg(Md3::Theme::instance().colors().surface.name()));
+        return;
+    }
+
     bool isDark = isDarkMode();
     
     // Load appropriate stylesheet
