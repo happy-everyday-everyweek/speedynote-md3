@@ -213,6 +213,13 @@ private:
     
     // FAB (Floating Action Button)
     FloatingActionButton* m_fab = nullptr;
+
+    // MD3 mobile chrome (used on Android)
+    bool m_md3 = false;
+    Md3::TopAppBar* m_md3TopBar = nullptr;
+    Md3::NavigationBar* m_md3BottomNav = nullptr;
+    Md3::Fab* m_md3Fab = nullptr;
+    Md3::BottomSheet* m_md3FabSheet = nullptr;
     
     // Export progress widget (Phase 3)
     ExportProgressWidget* m_exportProgressWidget = nullptr;
