@@ -27,10 +27,10 @@ public:
      * overlay parent). A previous snackbar on the same window is dismissed.
      * @param durationMs auto-dismiss delay; pass 0 to keep it until dismissed.
      */
-    static void show(QWidget *host, const QString &message,
-                     const QString &actionText = QString(),
-                     std::function<void()> action = {},
-                     int durationMs = 4000);
+    static void showMessage(QWidget *host, const QString &message,
+                            const QString &actionText = QString(),
+                            std::function<void()> action = {},
+                            int durationMs = 4000);
 
     static void dismissAll(QWidget *host);
 
