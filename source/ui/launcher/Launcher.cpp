@@ -232,6 +232,51 @@ void Launcher::setupUi()
     m_centralWidget = new QWidget(this);
     setCentralWidget(m_centralWidget);
     
+    m_md3 = false;
+#ifdef Q_OS_ANDROID
+    m_md3 = true;
+#endif
+    if (qEnvironmentVariableIsSet("SPEEDYNOTE_MD3")) {
+        m_md3 = true;
+    }
+
+    if (m_md3) {
+        // MD3 mobile chrome: top app bar + content + bottom navigation.
+        auto* md3Layout = new QVBoxLayout(m_centralWidget);
+        md3Layout->setContentsMargins(0, 0, 0, 0);
+        md3Layout->setSpacing(0);
+
+        setupMd3Chrome();
+
+        m_contentStack = new QStackedWidget(this);
+        m_timelineView = new QWidget(this);
+        m_timelineView->setObjectName("TimelineView");
+        m_starredView = new StarredView(this);
+        m_starredView->setObjectName("StarredViewWidget");
+        m_searchView = new SearchView(this);
+        m_searchView->setObjectName("SearchViewWidget");
+
+        m_contentStack->addWidget(m_timelineView);
+        m_contentStack->addWidget(m_starredView);
+        m_contentStack->addWidget(m_searchView);
+
+        md3Layout->addWidget(m_md3TopBar);
+        md3Layout->addWidget(m_contentStack, 1);
+        md3Layout->addWidget(m_md3BottomNav);
+
+        setupTimeline();
+        setupStarred();
+        setupSearch();
+        setupFAB();
+        setupExportProgress();
+
+        m_fadeAnimation = new QPropertyAnimation(this, "fadeOpacity", this);
+        m_fadeAnimation->setDuration(200);
+
+        switchToView(View::Timeline);
+        return;
+    }
+
     // Main horizontal layout: Navigation sidebar | Content area
     auto* mainLayout = new QHBoxLayout(m_centralWidget);
     mainLayout->setContentsMargins(0, 0, 0, 0);
