@@ -1,4 +1,5 @@
 #include "NavigationBar.h"
+#include "md3/Md3Theme.h"
 #include <QHBoxLayout>
 #include <QFontMetrics>
 #include <QPalette>
@@ -148,7 +149,11 @@ void NavigationBar::updateTheme(bool darkMode, const QColor &accentColor)
     // Apply background color using palette ONLY (most reliable for custom widgets)
     setAutoFillBackground(true);
     QPalette pal = palette();
+#ifdef Q_OS_ANDROID
+    pal.setColor(QPalette::Window, Md3::Theme::instance().colors().surfaceContainer);
+#else
     pal.setColor(QPalette::Window, accentColor);
+#endif
     setPalette(pal);
     
     // Apply button stylesheets (hover effects, sizing, etc.)
@@ -165,7 +170,11 @@ void NavigationBar::updateTheme(bool darkMode, const QColor &accentColor)
     m_menuButton->setDarkMode(darkMode);
     
     // Style filename button to match theme
-    QString textColor = darkMode ? "#ffffff" : "#000000";
+#ifdef Q_OS_ANDROID
+    const QString textColor = Md3::Theme::instance().colors().onSurface.name();
+#else
+    const QString textColor = darkMode ? "#ffffff" : "#000000";
+#endif
     m_filenameButton->setStyleSheet(QString(
         "QPushButton { "
         "   color: %1; "
