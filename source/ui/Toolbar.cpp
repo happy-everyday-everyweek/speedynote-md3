@@ -1,4 +1,5 @@
 #include "Toolbar.h"
+#include "md3/Md3Theme.h"
 #include "../compat/qt_compat.h"
 #include "launcher/KineticScrollHelper.h"
 #include "widgets/ExpandableToolButton.h"
@@ -408,10 +409,18 @@ void Toolbar::updateTheme(bool darkMode)
     QPalette sysPalette = QGuiApplication::palette();
     setAutoFillBackground(true);
     QPalette pal = palette();
+#ifdef Q_OS_ANDROID
+    pal.setColor(QPalette::Window, Md3::Theme::instance().colors().surfaceContainer);
+#else
     pal.setColor(QPalette::Window, sysPalette.color(QPalette::Window));
+#endif
     setPalette(pal);
 
+#ifdef Q_OS_ANDROID
+    m_borderColor = Md3::Theme::instance().colors().outlineVariant;
+#else
     m_borderColor = darkMode ? QColor(0x4d, 0x4d, 0x4d) : QColor(0xD0, 0xD0, 0xD0);
+#endif
 
     ButtonStyles::applyToWidget(this, darkMode);
 
