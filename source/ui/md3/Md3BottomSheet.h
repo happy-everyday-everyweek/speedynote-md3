@@ -6,6 +6,7 @@
 #include "Md3Theme.h"
 
 class QLabel;
+class QVariantAnimation;
 
 namespace Md3 {
 
