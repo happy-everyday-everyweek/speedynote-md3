@@ -507,6 +507,91 @@ static void loadTranslations(QApplication& app, QTranslator& translator)
 }
 
 // ============================================================================
+// Android Native Shell Integration
+// ============================================================================
+#ifdef Q_OS_ANDROID
+
+// The native LauncherActivity (a Material 3 library browser) starts this Qt
+// activity with an explicit editor action. The Java side stashes the action
+// in static fields before Qt's main() runs; these helpers read and clear
+// it, then apply it to the editor window.
+static QString androidPendingAction()
+{
+    QJniObject value = QJniObject::callStaticObjectMethod(
+        "org/speedynote/app/SpeedyNoteActivity",
+        "getPendingAction",
+        "()Ljava/lang/String;");
+    return value.isValid() ? value.toString() : QString();
+}
+
+static QString androidPendingPath()
+{
+    QJniObject value = QJniObject::callStaticObjectMethod(
+        "org/speedynote/app/SpeedyNoteActivity",
+        "getPendingPath",
+        "()Ljava/lang/String;");
+    return value.isValid() ? value.toString() : QString();
+}
+
+// Clear the stashed action so an activity restart cannot replay it.
+static void androidClearPendingLaunch()
+{
+    QJniObject::callStaticMethod<void>(
+        "org/speedynote/app/SpeedyNoteActivity",
+        "clearPendingLaunch",
+        "()V");
+}
+
+// Apply an editor action to the main window. Actions mirror the Java-side
+// contract: open / new-edgeless / new-paged / open-pdf / open-notebook.
+static void applyAndroidEditorAction(MainWindow* w, const QString& action,
+                                     const QString& path)
+{
+    if (!w)
+        return;
+    if (action == QLatin1String("open")) {
+        if (!path.isEmpty()) {
+            if (!w->switchToDocument(path))
+                w->openFileInNewTab(path);
+        }
+    } else if (action == QLatin1String("new-edgeless")) {
+        w->addNewEdgelessTab();
+    } else if (action == QLatin1String("new-paged")) {
+        w->addNewTab();
+    } else if (action == QLatin1String("open-pdf")) {
+        w->showOpenPdfDialog();
+    } else if (action == QLatin1String("open-notebook")) {
+        w->loadFolderDocument();
+    }
+}
+
+// JNI entry point: called by SpeedyNoteActivity.onNewIntent() when the
+// (singleTop) editor activity is reused for a new library selection.
+extern "C" Q_DECL_EXPORT void JNICALL
+Java_org_speedynote_app_SpeedyNoteActivity_nativeHandleIntent(
+    JNIEnv* /*env*/, jclass /*clazz*/, jstring action, jstring path)
+{
+    const QString a = QJniObject(action).toString();
+    const QString p = QJniObject(path).toString();
+    if (!qApp)
+        return;
+    QMetaObject::invokeMethod(qApp, [a, p]() {
+        androidClearPendingLaunch();
+        MainWindow* w = MainWindow::findExistingMainWindow();
+        if (!w) {
+            w = new MainWindow();
+            w->setAttribute(Qt::WA_DeleteOnClose);
+            w->show();
+        } else {
+            w->bringToFront();
+        }
+        applyAndroidEditorAction(w, a, p);
+    }, Qt::QueuedConnection);
+}
+
+#endif // Q_OS_ANDROID
+
+// ============================================================================
 // Launcher Setup
 // ============================================================================
 
@@ -597,6 +682,8 @@ static Launcher* createLauncherForColdStart()
     return launcher;
 }
 
+#ifndef Q_OS_ANDROID
+
 // Show MainWindow at cold start. On macOS this routes through the
 // already-visible Launcher using the exact sequence that the proven-
 // working Launcher::notebookSelected click uses (preserveWindowState +
@@ -625,6 +712,8 @@ static void showLauncherAtColdStart(Launcher* launcher)
     (void)launcher;
 #endif
 }
+
+#endif // Q_OS_ANDROID
 
 // ============================================================================
 // Test Runners (Desktop Debug Builds Only)
@@ -1133,6 +1222,7 @@ int main(int argc, char* argv[])
         (void)l;
     };
 
+#ifndef Q_OS_ANDROID
     // Parent for the session-restore prompt in the no-file branch.
     // On macOS the launcher is visible (priming pass), so we get a real
     // sheet/window-modal dialog. On other platforms the launcher is
@@ -1196,6 +1286,28 @@ int main(int argc, char* argv[])
         showLauncherAtColdStart(launcher);
         registerLauncherWithPlatform(launcher);
     }
+#else
+    // Android: LauncherActivity (native Material 3 shell) is the app's
+    // home; this Qt activity is started only for an explicit editor action
+    // (or a file/session hand-off). Surface the editor window directly and
+    // never the in-process Qt Launcher.
+    {
+        const QString androidAction = androidPendingAction();
+        const QString androidPath = androidPendingPath();
+        androidClearPendingLaunch();
+
+        auto* w = new MainWindow();
+        w->setAttribute(Qt::WA_DeleteOnClose);
+        w->show();
+        if (!androidAction.isEmpty()) {
+            applyAndroidEditorAction(w, androidAction, androidPath);
+        } else if (!inputFile.isEmpty()) {
+            w->openFileInNewTab(inputFile);
+        }
+        registerMainWindowWithPlatform(w);
+        Q_UNUSED(registerLauncherWithPlatform);
+    }
+#endif
 
     int exitCode = app.exec();
 
