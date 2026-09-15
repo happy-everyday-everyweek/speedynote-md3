@@ -1,10 +1,16 @@
 #include "Md3Theme.h"
 
 #include <QApplication>
+#include <QGuiApplication>
 #include <QPainter>
 #include <QPalette>
 #include <QSettings>
+#include <QStyleHints>
 #include <QtMath>
+
+#ifdef Q_OS_ANDROID
+#include <QJniObject>
+#endif
 
 namespace Md3 {
 
@@ -52,6 +58,52 @@ void Theme::setSeedColor(const QColor &seed)
     m_seed = seed;
     m_color = Md3ColorScheme::fromSeedVariant(m_seed, m_color.isDark, static_cast<int>(m_variant), m_contrast);
     emit changed();
+}
+
+bool Theme::applyDynamicColor()
+{
+#ifdef Q_OS_ANDROID
+    const jint argb = QJniObject::callStaticMethod<jint>(
+        "org/speedynote/app/Md3ColorHelper",
+        "getSystemAccentColor",
+        "()I");
+    if (argb != 0) {
+        const QColor seed = QColor::fromRgba(static_cast<QRgb>(argb));
+        if (seed.isValid() && seed != m_seed) {
+            setSeedColor(seed);
+            return true;
+        }
+    }
+#endif
+    return false;
+}
+
+void Theme::followSystemColorScheme()
+{
+    auto applyCurrentMode = [this]() {
+        QSettings settings(QStringLiteral("SpeedyNote"), QStringLiteral("App"));
+        const QString mode = settings.value(QStringLiteral("md3/themeMode"),
+                                            QStringLiteral("system")).toString();
+        if (mode == QLatin1String("dark")) {
+            setDarkMode(true);
+            return;
+        }
+        if (mode == QLatin1String("light")) {
+            setDarkMode(false);
+            return;
+        }
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+        const auto scheme = QGuiApplication::styleHints()->colorScheme();
+        setDarkMode(scheme == Qt::ColorScheme::Dark);
+#endif
+    };
+
+    applyCurrentMode();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, this,
+            [applyCurrentMode](Qt::ColorScheme) { applyCurrentMode(); });
+#endif
 }
 
 void Theme::rebuild()
@@ -322,6 +374,78 @@ QString Theme::applicationStyleSheet() const
                "QProgressBar::chunk { background-color: %2; border-radius: 2px; }")
         .arg(surfaceContainerHighest,
              primary);
+
+    // Lists, trees, tables.
+    qss += QStringLiteral(
+               "QTreeView, QListView, QTableView, QListWidget, QTreeWidget, QTableWidget {"
+               "  background-color: transparent;"
+               "  color: %1;"
+               "  border: none;"
+               "  outline: none;"
+               "  selection-background-color: %2;"
+               "  selection-color: %3;"
+               "  alternate-background-color: %4;"
+               "}"
+               "QTreeView::item, QListView::item, QTableView::item,"
+               "QListWidget::item, QTreeWidget::item, QTableWidget::item {"
+               "  padding: 8px 10px;"
+               "  border-radius: 8px;"
+               "}"
+               "QTreeView::item:hover, QListView::item:hover, QListWidget::item:hover,"
+               "QTreeWidget::item:hover { background-color: %5; }"
+               "QHeaderView::section {"
+               "  background-color: %6;"
+               "  color: %7;"
+               "  border: none;"
+               "  padding: 8px 10px;"
+               "}")
+        .arg(onSurface,
+             secondaryContainer,
+             onSecondaryContainer,
+             surfaceContainer,
+             fade(c.onSurface, 0.06),
+             surfaceContainerHigh,
+             onSurfaceVariant);
+
+    // Menus and menu bar.
+    qss += QStringLiteral(
+               "QMenu {"
+               "  background-color: %1;"
+               "  color: %2;"
+               "  border: 1px solid %3;"
+               "  border-radius: 12px;"
+               "  padding: 8px;"
+               "}"
+               "QMenu::item {"
+               "  padding: 10px 24px 10px 16px;"
+               "  border-radius: 8px;"
+               "}"
+               "QMenu::item:selected { background-color: %4; color: %5; }"
+               "QMenu::separator { height: 1px; background: %3; margin: 6px 10px; }"
+               "QMenuBar { background-color: %6; color: %2; }"
+               "QMenuBar::item { padding: 6px 12px; border-radius: 8px; background: transparent; }"
+               "QMenuBar::item:selected { background-color: %4; color: %5; }")
+        .arg(surfaceContainer,
+             onSurface,
+             outlineVariant,
+             fade(c.onSurface, 0.10),
+             onSurface,
+             surfaceContainerHigh);
+
+    // Checkboxes and radio buttons (indicator tinting comes from the palette;
+    // this keeps text metrics and spacing aligned with the M3 scale).
+    qss += QStringLiteral(
+               "QCheckBox, QRadioButton { color: %1; spacing: 8px; padding: 4px 0; }"
+               "QCheckBox:disabled, QRadioButton:disabled { color: %2; }")
+        .arg(onSurface, fade(c.onSurface, 0.38));
+
+    // Splitter handles and scroll areas.
+    qss += QStringLiteral(
+               "QSplitter::handle { background-color: %1; }"
+               "QSplitter::handle:horizontal { width: 2px; }"
+               "QSplitter::handle:vertical { height: 2px; }"
+               "QScrollArea { border: none; }")
+        .arg(outlineVariant);
 
     return qss;
 }
