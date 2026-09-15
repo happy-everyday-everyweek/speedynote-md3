@@ -997,6 +997,11 @@ set(UI_SOURCES
     source/ui/md3/Md3Menu.cpp
     source/ui/md3/Md3BottomSheet.cpp
     source/ui/md3/Md3Switch.cpp
+    source/ui/md3/Md3Checkbox.cpp
+    source/ui/md3/Md3Radio.cpp
+    source/ui/md3/Md3Slider.cpp
+    source/ui/md3/Md3Progress.cpp
+    source/ui/md3/Md3Dialog.cpp
 )
 
 # PDF abstraction layer
