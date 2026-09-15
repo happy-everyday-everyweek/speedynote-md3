@@ -99,10 +99,13 @@ void Theme::followSystemColorScheme()
     };
 
     applyCurrentMode();
-
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
-    connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, this,
-            [applyCurrentMode](Qt::ColorScheme) { applyCurrentMode(); });
+    static bool schemeHookInstalled = false;
+    if (!schemeHookInstalled) {
+        schemeHookInstalled = true;
+        connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, this,
+                [applyCurrentMode](Qt::ColorScheme) { applyCurrentMode(); });
+    }
 #endif
 }
 
@@ -445,11 +448,61 @@ QString Theme::applicationStyleSheet() const
                "QSplitter::handle:horizontal { width: 2px; }"
                "QSplitter::handle:vertical { height: 2px; }"
                "QScrollArea { border: none; }")
-        .arg(outlineVariant);
-
+.arg(outlineVariant);
+    // Tabs (MD3 primary tabs).
+    qss += QStringLiteral(
+               "QTabWidget::pane { border: none; background: transparent; }"
+               "QTabBar { background: transparent; }"
+               "QTabBar::tab {"
+               "  background: transparent;"
+               "  color: %1;"
+               "  padding: 10px 18px;"
+               "  border: none;"
+               "  border-bottom: 3px solid transparent;"
+               "}"
+               "QTabBar::tab:selected { color: %2; border-bottom: 3px solid %2; }"
+               "QTabBar::tab:hover:!selected { background-color: %3; }")
+        .arg(onSurfaceVariant, primary, fade(c.onSurface, 0.06));
+    // Group boxes.
+    qss += QStringLiteral(
+               "QGroupBox {"
+               "  border: 1px solid %1;"
+               "  border-radius: 12px;"
+               "  margin-top: 14px;"
+               "  padding-top: 10px;"
+               "}"
+               "QGroupBox::title {"
+               "  subcontrol-origin: margin;"
+               "  left: 12px;"
+               "  padding: 0 4px;"
+               "  color: %2;"
+               "}")
+        .arg(outlineVariant, onSurfaceVariant);
+    // Drop-down lists and spin-box buttons.
+    qss += QStringLiteral(
+               "QComboBox::drop-down { border: none; width: 28px; }"
+               "QComboBox QAbstractItemView {"
+               "  background-color: %1;"
+               "  color: %2;"
+               "  border: 1px solid %3;"
+               "  border-radius: 8px;"
+               "  selection-background-color: %4;"
+               "  selection-color: %5;"
+               "}"
+               "QSpinBox::up-button, QSpinBox::down-button,"
+               "QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {"
+               "  background: transparent;"
+               "  border: none;"
+               "  width: 24px;"
+               "}")
+        .arg(surfaceContainerHigh, onSurface, outlineVariant,
+             secondaryContainer, onSecondaryContainer);
+    // Dialog surfaces.
+    qss += QStringLiteral(
+               "QDialog { background-color: %1; }")
+        .arg(surface);
     return qss;
 }
-
 QString Theme::toolbarStyleSheet() const
 {
     const Md3ColorScheme &c = m_color;
