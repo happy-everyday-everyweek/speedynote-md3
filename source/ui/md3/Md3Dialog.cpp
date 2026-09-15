@@ -1,12 +1,17 @@
 #include "Md3Dialog.h"
 
+#include <QApplication>
+#include <QEventLoop>
 #include <QFontMetrics>
 #include <QGraphicsOpacityEffect>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QScreen>
 #include <QVBoxLayout>
 #include <QVariantAnimation>
 
@@ -48,12 +53,19 @@ private:
 };
 
 Dialog::Dialog(QWidget *host)
-    : QWidget(host ? host->window() : nullptr)
+    : QWidget(host ? host->window()
+                   : (QApplication::activeWindow() ? QApplication::activeWindow()->window()
+                                                   : nullptr))
 {
     initialize();
 }
 
-Dialog::~Dialog() = default;
+Dialog::~Dialog()
+{
+    if (m_hostWindow) {
+        m_hostWindow->removeEventFilter(this);
+    }
+}
 
 void Dialog::initialize()
 {
@@ -127,6 +139,28 @@ void Dialog::updateColors()
     if (m_supportingLabel) {
         m_supportingLabel->setStyleSheet(QStringLiteral("color: %1;").arg(c.onSurfaceVariant.name()));
     }
+    if (m_textField) {
+        m_textField->setStyleSheet(QStringLiteral(
+            "QLineEdit {"
+            " background: %1;"
+            " color: %2;"
+            " border: none;"
+            " border-bottom: 1px solid %3;"
+            " border-top-left-radius: 4px;"
+            " border-top-right-radius: 4px;"
+            " padding: 14px 16px;"
+            " selection-background-color: %4;"
+            "}"
+            "QLineEdit:focus {"
+            " border-bottom: 2px solid %5;"
+            " padding-bottom: 13px;"
+            "}")
+            .arg(c.surfaceContainerHighest.name(),
+                 c.onSurface.name(),
+                 c.outline.name(),
+                 c.primary.name(),
+                 c.primary.name()));
+    }
 }
 
 void Dialog::setHeadline(const QString &text)
@@ -176,12 +210,48 @@ void Dialog::clearActions()
     }
 }
 
+void Dialog::addTextField(const QString &initialText)
+{
+    if (!m_textField) {
+        auto *layout = qobject_cast<QVBoxLayout *>(m_panel->layout());
+        if (!layout) {
+            return;
+        }
+        m_textField = new QLineEdit(m_panel);
+        m_textField->setFont(Theme::instance().font(TypeRole::BodyLarge));
+        m_textField->setMinimumHeight(52);
+        m_textField->setFrame(false);
+        const int actionsIndex = layout->indexOf(m_actionsRow);
+        const int insertAt = actionsIndex >= 0 ? actionsIndex : layout->count();
+        layout->insertWidget(insertAt, m_textField);
+        layout->insertSpacing(insertAt + 1, 16);
+        updateColors();
+    }
+    m_textField->setText(initialText);
+    updateGeometryToHost();
+}
+
+QString Dialog::textFieldValue() const
+{
+    return m_textField ? m_textField->text() : QString();
+}
+
+void Dialog::focusTextField()
+{
+    if (m_textField) {
+        m_textField->setFocus();
+    }
+}
+
 void Dialog::updateGeometryToHost()
 {
-    if (!m_hostWindow) {
-        return;
+    if (m_hostWindow) {
+        setGeometry(m_hostWindow->rect());
+    } else if (QScreen *screen = QGuiApplication::primaryScreen()) {
+        setGeometry(QRect(QPoint(0, 0), screen->availableSize()));
+    } else {
+        setGeometry(QRect(QPoint(0, 0), QSize(400, 800)));
     }
-    setGeometry(m_hostWindow->rect());
 
     const QFontMetrics fmH(Theme::instance().font(TypeRole::HeadlineSmall));
     const QFontMetrics fmS(Theme::instance().font(TypeRole::BodyMedium));
@@ -328,6 +398,105 @@ Dialog *Dialog::showMessage(QWidget *host, const QString &headline,
     QObject::connect(dialog, &Dialog::closed, dialog, &QObject::deleteLater);
     dialog->open();
     return dialog;
+}
+
+int Dialog::choose(QWidget *host, const QString &headline, const QString &supporting,
+                   const QStringList &actions)
+{
+    Dialog dialog(host);
+    dialog.setHeadline(headline);
+    if (!supporting.isEmpty()) {
+        dialog.setSupportingText(supporting);
+    }
+
+    int chosen = -1;
+    const QStringList labels = actions.isEmpty() ? QStringList{QObject::tr("OK")} : actions;
+    for (int i = 0; i < labels.size(); ++i) {
+        const int index = i;
+        dialog.addAction(labels.at(i), [&chosen, index]() { chosen = index; });
+    }
+
+    QEventLoop loop;
+    QObject::connect(&dialog, &Dialog::closed, &loop, &QEventLoop::quit);
+    dialog.open();
+    loop.exec();
+    return chosen;
+}
+
+bool Dialog::confirm(QWidget *host, const QString &headline, const QString &supporting,
+                     const QString &confirmLabel, const QString &cancelLabel)
+{
+    Dialog dialog(host);
+    dialog.setHeadline(headline);
+    if (!supporting.isEmpty()) {
+        dialog.setSupportingText(supporting);
+    }
+
+    bool accepted = false;
+    dialog.addAction(cancelLabel.isEmpty() ? QObject::tr("Cancel") : cancelLabel);
+    dialog.addAction(confirmLabel.isEmpty() ? QObject::tr("OK") : confirmLabel,
+                     [&accepted]() { accepted = true; });
+
+    QEventLoop loop;
+    QObject::connect(&dialog, &Dialog::closed, &loop, &QEventLoop::quit);
+    dialog.open();
+    loop.exec();
+    return accepted;
+}
+
+void Dialog::alert(QWidget *host, const QString &headline, const QString &supporting,
+                   const QString &okLabel)
+{
+    Dialog dialog(host);
+    dialog.setHeadline(headline);
+    if (!supporting.isEmpty()) {
+        dialog.setSupportingText(supporting);
+    }
+    dialog.addAction(okLabel.isEmpty() ? QObject::tr("OK") : okLabel);
+
+    QEventLoop loop;
+    QObject::connect(&dialog, &Dialog::closed, &loop, &QEventLoop::quit);
+    dialog.open();
+    loop.exec();
+}
+
+QString Dialog::getText(QWidget *host, const QString &headline, const QString &supporting,
+                        const QString &initialText, bool *ok,
+                        const QString &confirmLabel, const QString &cancelLabel)
+{
+    Dialog dialog(host);
+    dialog.setHeadline(headline);
+    if (!supporting.isEmpty()) {
+        dialog.setSupportingText(supporting);
+    }
+    dialog.addTextField(initialText);
+    if (dialog.m_textField) {
+        dialog.m_textField->selectAll();
+    }
+
+    bool accepted = false;
+    dialog.addAction(cancelLabel.isEmpty() ? QObject::tr("Cancel") : cancelLabel);
+    dialog.addAction(confirmLabel.isEmpty() ? QObject::tr("OK") : confirmLabel,
+                     [&accepted]() { accepted = true; });
+
+    if (dialog.m_textField) {
+        QObject::connect(dialog.m_textField, &QLineEdit::returnPressed, &dialog,
+                         [&dialog, &accepted]() {
+            accepted = true;
+            dialog.close();
+        });
+    }
+
+    QEventLoop loop;
+    QObject::connect(&dialog, &Dialog::closed, &loop, &QEventLoop::quit);
+    dialog.open();
+    dialog.focusTextField();
+    loop.exec();
+
+    if (ok) {
+        *ok = accepted;
+    }
+    return accepted ? dialog.textFieldValue() : QString();
 }
 
 } // namespace Md3
