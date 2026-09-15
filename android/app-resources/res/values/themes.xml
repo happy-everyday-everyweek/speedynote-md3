@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Theme for the native Material 3 home screen (LauncherActivity).
+        DayNight follows the system dark mode; DynamicColors swaps in the
+        Material You wallpaper palette on Android 12+.
+    -->
+    <style name="Theme.SpeedyNote.Launcher" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">?attr/colorSurface</item>
+    </style>
+</resources>
