@@ -178,8 +178,8 @@ void ListItem::paintEvent(QPaintEvent *)
     qreal textX = kLeftPadding;
     if (!m_leadingIcon.isNull()) {
         const QRectF iconRect(textX, (height() - kIconSize) / 2.0, kIconSize, kIconSize);
-        m_leadingIcon.paint(&p, iconRect.toRect(), Qt::AlignCenter, QIcon::Normal,
-                            isEnabled() ? QIcon::On : QIcon::Disabled);
+        m_leadingIcon.paint(&p, iconRect.toRect(), Qt::AlignCenter,
+                            isEnabled() ? QIcon::Normal : QIcon::Disabled, QIcon::Off);
         textX += kIconSize + kIconGap;
     }
 
@@ -187,8 +187,8 @@ void ListItem::paintEvent(QPaintEvent *)
     if (!m_trailingIcon.isNull()) {
         const QRectF iconRect(textRight - kIconSize, (height() - kIconSize) / 2.0,
                               kIconSize, kIconSize);
-        m_trailingIcon.paint(&p, iconRect.toRect(), Qt::AlignCenter, QIcon::Normal,
-                             isEnabled() ? QIcon::On : QIcon::Disabled);
+        m_trailingIcon.paint(&p, iconRect.toRect(), Qt::AlignCenter,
+                             isEnabled() ? QIcon::Normal : QIcon::Disabled, QIcon::Off);
         textRight -= kIconSize + kIconGap;
     }
     if (!m_trailing.isEmpty()) {
