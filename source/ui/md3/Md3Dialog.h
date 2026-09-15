@@ -1,6 +1,7 @@
 #ifndef MD3_DIALOG_H
 #define MD3_DIALOG_H
 
+#include <QPointer>
 #include <QString>
 #include <QStringList>
 #include <QWidget>
@@ -13,6 +14,7 @@
 class QGraphicsOpacityEffect;
 class QHBoxLayout;
 class QLabel;
+class QLineEdit;
 class QVariantAnimation;
 
 namespace Md3 {
@@ -48,6 +50,11 @@ public:
     void close();
     bool isOpen() const { return m_open; }
 
+    /// Inline text field helpers (used by the synchronous getText()).
+    void addTextField(const QString &initialText = QString());
+    QString textFieldValue() const;
+    void focusTextField();
+
     /**
      * Fire-and-forget helper: builds a dialog with the given headline,
      * supporting text and action labels (default "OK"), invokes
@@ -57,6 +64,31 @@ public:
                                const QString &supporting = QString(),
                                const QStringList &actions = QStringList(),
                                std::function<void(int)> onResult = {});
+
+    /**
+     * Synchronous helpers: show the dialog and block until it is dismissed.
+     * `choose()` returns the index of the chosen action, or -1 when the
+     * dialog is dismissed without a choice; `confirm()` returns true when
+     * the confirm action was chosen; `getText()` returns the entered text
+     * (empty when cancelled). Meant to replace blocking QMessageBox /
+     * QInputDialog call sites.
+     */
+    static int choose(QWidget *host, const QString &headline,
+                      const QString &supporting,
+                      const QStringList &actions);
+    static bool confirm(QWidget *host, const QString &headline,
+                        const QString &supporting,
+                        const QString &confirmLabel = QString(),
+                        const QString &cancelLabel = QString());
+    static void alert(QWidget *host, const QString &headline,
+                      const QString &supporting = QString(),
+                      const QString &okLabel = QString());
+    static QString getText(QWidget *host, const QString &headline,
+                           const QString &supporting,
+                           const QString &initialText = QString(),
+                           bool *ok = nullptr,
+                           const QString &confirmLabel = QString(),
+                           const QString &cancelLabel = QString());
 
 signals:
     void actionTriggered(int index);
@@ -77,13 +109,14 @@ private:
     void animateTo(qreal target, bool closing);
     void updateColors();
 
-    QWidget *m_hostWindow = nullptr;
+    QPointer<QWidget> m_hostWindow = nullptr;
     Panel *m_panel = nullptr;
     QLabel *m_headlineLabel = nullptr;
     QLabel *m_supportingLabel = nullptr;
     QWidget *m_actionsRow = nullptr;
     QHBoxLayout *m_actionsLayout = nullptr;
     QGraphicsOpacityEffect *m_panelOpacity = nullptr;
+    QLineEdit *m_textField = nullptr;
 
     QString m_headline;
     QString m_supporting;
