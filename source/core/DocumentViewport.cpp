@@ -101,6 +101,7 @@ static void initEraserJni()
 #include <QRegularExpression>
 #include <QMenu>             // For addLinkToSlot menu (Phase C.5.3 - temporary)
 #include "../ui/ThemeColors.h"
+#include "../ui/md3/Md3Dialog.h"
 #include <QInputDialog>      // For URL input dialog (Phase C.5.3 - temporary)
 
 // ===== Constants =====
@@ -11202,7 +11203,7 @@ void DocumentViewport::addLinkToSlot(int slotIndex)
     } else if (selected && selected == cancelPairAction) {
         cancelPositionLinkPairing();
     } else if (selected == urlAction) {
-        QString url = QInputDialog::getText(this, tr("Add URL"), tr("Enter URL:"));
+        QString url = Md3::Dialog::getText(this, tr("Add URL"), tr("Enter URL:"));
         if (!url.isEmpty()) {
             link->linkSlots[slotIndex].type = LinkSlot::Type::Url;
             link->linkSlots[slotIndex].url = url;
