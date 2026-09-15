@@ -158,9 +158,9 @@ void NavigationRail::paintEvent(QPaintEvent *)
         const QColor iconColor = !isEnabled() ? withAlpha(c.onSurface, 0.38)
                                  : (selected ? c.onSecondaryContainer : c.onSurfaceVariant);
         if (!m_items.at(i).icon.isNull()) {
-            m_items.at(i).icon.paint(&p, iconRect.toRect(), Qt::AlignCenter, QIcon::Normal,
-                                     isEnabled() ? (selected ? QIcon::On : QIcon::Off)
-                                                 : QIcon::Disabled);
+            m_items.at(i).icon.paint(&p, iconRect.toRect(), Qt::AlignCenter,
+                                     isEnabled() ? QIcon::Normal : QIcon::Disabled,
+                                     selected ? QIcon::On : QIcon::Off);
         } else {
             QPen pen(iconColor, 1.6);
             p.setPen(pen);
