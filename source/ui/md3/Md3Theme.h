@@ -62,6 +62,14 @@ public:
     void setDarkMode(bool dark);
     void setSeedColor(const QColor &seed);
 
+    /// Android 12+ Material You: adopt the system accent color as the seed.
+    /// Returns true when a system color was found and applied.
+    bool applyDynamicColor();
+
+    /// Keep following the system light/dark scheme (and the md3/themeMode
+    /// override). No-op on Qt < 6.5.
+    void followSystemColorScheme();
+
     bool isDark() const { return m_color.isDark; }
     const Md3ColorScheme &colors() const { return m_color; }
     QColor seedColor() const { return m_seed; }
