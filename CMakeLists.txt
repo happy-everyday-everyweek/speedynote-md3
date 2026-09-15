@@ -1002,6 +1002,16 @@ set(UI_SOURCES
     source/ui/md3/Md3Slider.cpp
     source/ui/md3/Md3Progress.cpp
     source/ui/md3/Md3Dialog.cpp
+    source/ui/md3/Md3SegmentedButton.cpp
+    source/ui/md3/Md3Chip.cpp
+    source/ui/md3/Md3Card.cpp
+    source/ui/md3/Md3Divider.cpp
+    source/ui/md3/Md3ListItem.cpp
+    source/ui/md3/Md3SearchBar.cpp
+    source/ui/md3/Md3TabBar.cpp
+    source/ui/md3/Md3TextField.cpp
+    source/ui/md3/Md3Badge.cpp
+    source/ui/md3/Md3NavigationRail.cpp
 )
 
 # PDF abstraction layer
