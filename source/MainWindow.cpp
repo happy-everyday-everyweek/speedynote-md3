@@ -8499,6 +8499,17 @@ QPixmap MainWindow::renderEdgelessThumbnail(Document* doc)
 }
 
 void MainWindow::toggleLauncher() {
+#ifdef Q_OS_ANDROID
+    // Android: the home experience is the native LauncherActivity
+    // (Material 3 shell). "Back to library" finishes this editor
+    // activity so the native shell becomes visible again; the
+    // in-process Qt Launcher is never used on Android.
+    QJniObject activity = QNativeInterface::QAndroidApplication::context();
+    if (activity.isValid()) {
+        activity.callMethod<void>("finish", "()V");
+    }
+    return;
+#endif
     // Phase P.4.4: Toggle launcher visibility
     // Phase P.4.5: Smooth transition with fade animation
     
