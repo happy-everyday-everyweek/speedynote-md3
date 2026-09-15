@@ -137,8 +137,8 @@ void Chip::paintEvent(QPaintEvent *)
             p.drawLine(QPointF(iconRect.left() + 7.5, iconRect.top() + 13.5),
                        QPointF(iconRect.left() + 14.5, iconRect.top() + 5.5));
         } else if (!m_icon.isNull()) {
-            m_icon.paint(&p, iconRect.toRect(), Qt::AlignCenter, QIcon::Normal,
-                         isEnabled() ? QIcon::On : QIcon::Disabled);
+            m_icon.paint(&p, iconRect.toRect(), Qt::AlignCenter,
+                         isEnabled() ? QIcon::Normal : QIcon::Disabled, QIcon::Off);
         }
         x += kIconSize + kIconGap;
     }
