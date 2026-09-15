@@ -43,7 +43,24 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
 
-        <!-- Main activity - custom class to handle PDF picker results -->
+        <!-- Native Material 3 home screen: notebook library browser. -->
+        <activity
+            android:name="org.speedynote.app.LauncherActivity"
+            android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
+            android:label="SpeedyNote"
+            android:launchMode="singleTop"
+            android:screenOrientation="unspecified"
+            android:theme="@style/Theme.SpeedyNote.Launcher"
+            android:exported="true"
+            android:windowSoftInputMode="adjustPan">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <!-- Editor: hosts the Qt canvas; stays the PDF/.snb VIEW target. -->
         <activity
             android:name="org.speedynote.app.SpeedyNoteActivity"
             android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
@@ -52,11 +69,6 @@
             android:screenOrientation="unspecified"
             android:exported="true"
             android:windowSoftInputMode="adjustPan">
-
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
 
             <!-- Open PDF files -->
             <intent-filter>
