@@ -21,6 +21,9 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include "ui/md3/Md3Dialog.h"
+#include "ui/md3/Md3SegmentedButton.h"
+#include "ui/md3/Md3Switch.h"
+#include "ui/md3/Md3Theme.h"
 #include <QApplication>
 #include <QMetaObject>
 #include <QIcon>
@@ -305,6 +308,14 @@ void ControlPanelDialog::loadSettings()
         accentColorButton->setStyleSheet(QString("background-color: %1").arg(selectedAccentColor.name()));
         accentColorButton->setEnabled(useCustomAccentCheckbox->isChecked());
     }
+    // MD3 colour mode + Material You dynamic colour.
+    if (themeModeSelector) {
+        const QString md3Mode = settings.value("md3/themeMode", "system").toString();
+        themeModeSelector->setCurrentIndex(md3Mode == "light" ? 1 : (md3Mode == "dark" ? 2 : 0));
+    }
+    if (dynamicColorSwitch) {
+        dynamicColorSwitch->setChecked(settings.value("md3/dynamicColor", true).toBool());
+    }
     
     // Load PDF dark mode setting (defaults to true)
     pdfDarkModeCheckbox->setChecked(settings.value("display/pdfDarkMode", true).toBool());
@@ -359,6 +370,25 @@ void ControlPanelDialog::applyChanges()
     mainWindowRef->setUseCustomAccentColor(useCustomAccentCheckbox->isChecked());
     if (selectedAccentColor.isValid()) {
         mainWindowRef->setCustomAccentColor(selectedAccentColor);
+    }
+    // Apply MD3 colour mode + Material You dynamic colour.
+    if (themeModeSelector) {
+        static const char *kMd3Modes[] = {"system", "light", "dark"};
+        settings.setValue("md3/themeMode",
+                          QString::fromLatin1(kMd3Modes[qBound(0, themeModeSelector->currentIndex(), 2)]));
+    }
+    if (dynamicColorSwitch) {
+        settings.setValue("md3/dynamicColor", dynamicColorSwitch->isChecked());
+    }
+    Md3::Theme &md3theme = Md3::Theme::instance();
+    if (dynamicColorSwitch && dynamicColorSwitch->isChecked()) {
+        md3theme.applyDynamicColor();
+    }
+    md3theme.followSystemColorScheme();
+    md3theme.save();
+    md3theme.applyToApplication(qApp);
+    if (qApp) {
+        qApp->setStyleSheet(md3theme.applicationStyleSheet());
     }
     
     // Apply PDF dark mode settings
@@ -1610,6 +1640,31 @@ void ControlPanelDialog::createThemeTab() {
         if (mainWindowRef) mainWindowRef->setScrollBarsPinned(checked);
     });
 
+    // --- MD3 appearance: colour mode + Material You dynamic colour --------
+    layout->addSpacing(15);
+    QLabel *themeModeLabel = new QLabel(tr("Appearance Mode"), themeTab);
+    themeModeLabel->setStyleSheet("font-weight: bold; margin-top: 10px;");
+    layout->addWidget(themeModeLabel);
+    themeModeSelector = new Md3::SegmentedButton(themeTab);
+    themeModeSelector->addSegment(tr("System"));
+    themeModeSelector->addSegment(tr("Light"));
+    themeModeSelector->addSegment(tr("Dark"));
+    layout->addWidget(themeModeSelector);
+    QLabel *themeModeNote = new QLabel(tr("System follows the Android light/dark setting; Light and Dark force the colour mode."), themeTab);
+    themeModeNote->setWordWrap(true);
+    themeModeNote->setStyleSheet("color: gray; font-size: 10px;");
+    layout->addWidget(themeModeNote);
+    QHBoxLayout *dynamicColorLayout = new QHBoxLayout();
+    QLabel *dynamicColorLabel = new QLabel(tr("Material You dynamic colour"), themeTab);
+    dynamicColorLayout->addWidget(dynamicColorLabel);
+    dynamicColorLayout->addStretch();
+    dynamicColorSwitch = new Md3::Switch(themeTab);
+    dynamicColorLayout->addWidget(dynamicColorSwitch);
+    layout->addLayout(dynamicColorLayout);
+    QLabel *dynamicColorNote = new QLabel(tr("Android 12+: derive the entire palette from the system wallpaper accent colour. Turn off to keep the app seed colour."), themeTab);
+    dynamicColorNote->setWordWrap(true);
+    dynamicColorNote->setStyleSheet("color: gray; font-size: 10px;");
+    layout->addWidget(dynamicColorNote);
     layout->addStretch();
     
     tabWidget->addTab(themeTab, tr("Theme"));
