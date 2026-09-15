@@ -64,6 +64,7 @@
 #include <QAbstractSpinBox>
 #include <QSpinBox>
 #include <QInputDialog>
+#include "ui/md3/Md3Dialog.h"
 #include <QStandardPaths>
 #include <QRegularExpression>  // BUG-A002: For filename sanitization on Android
 #include <QSettings>
@@ -559,7 +560,7 @@ MainWindow::MainWindow(QWidget *parent)
         
         // Prevent closing the last tab across all panes
         if (m_splitViewManager->totalTabCount() <= 1) {
-            QMessageBox::information(this, tr("Notice"), 
+            Md3::Dialog::alert(this, tr("Notice"), 
                 tr("At least one tab must remain open."));
             return;
         }
@@ -585,25 +586,23 @@ MainWindow::MainWindow(QWidget *parent)
         
         if (needsSavePrompt) {
             QString docType = doc->isEdgeless() ? tr("canvas") : tr("document");
-            QMessageBox::StandardButton reply = QMessageBox::question(
+            const int choice = Md3::Dialog::choose(
                 this,
                 tr("Save Changes?"),
                 tr("This %1 has unsaved changes. Do you want to save before closing?").arg(docType),
-                QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-                QMessageBox::Save
-            );
+                {tr("Discard"), tr("Cancel"), tr("Save")});
             
-            if (reply == QMessageBox::Cancel) {
+            if (choice == 1 || choice < 0) {
                 return;
             }
             
-            if (reply == QMessageBox::Save) {
+            if (choice == 2) {
                 QString existingPath = m_documentManager->documentPath(doc);
                 bool canSaveInPlace = !existingPath.isEmpty() && !isUsingTemp;
                 
                 if (canSaveInPlace) {
                     if (!m_documentManager->saveDocument(doc)) {
-                        QMessageBox::critical(this, tr("Save Error"),
+                        Md3::Dialog::alert(this, tr("Save Error"),
                             tr("Failed to save document to:\n%1").arg(existingPath));
                         return;
                     }
@@ -619,7 +618,7 @@ MainWindow::MainWindow(QWidget *parent)
                 if (doc->needsMaterialization() && !doc->bundlePath().isEmpty()) {
                     if (m_searchEngine) m_searchEngine->cancelAndWait();
                     if (!doc->saveBundle(doc->bundlePath(), /*finalize=*/true)) {
-                        QMessageBox::critical(
+                        Md3::Dialog::alert(
                             this, tr("Save Error"),
                             tr("PDF sources could not be finalized. Repair the "
                                "unavailable sources before closing."));
@@ -643,7 +642,7 @@ MainWindow::MainWindow(QWidget *parent)
             if (!isUsingTemp && doc->needsMaterialization() && !doc->bundlePath().isEmpty()) {
                 if (m_searchEngine) m_searchEngine->cancelAndWait();
                 if (!doc->saveBundle(doc->bundlePath(), /*finalize=*/true)) {
-                    QMessageBox::critical(
+                    Md3::Dialog::alert(
                         this, tr("Save Error"),
                         tr("PDF sources could not be finalized. Repair the "
                            "unavailable sources before closing."));
@@ -2932,7 +2931,7 @@ void MainWindow::connectViewportScrollSignals(DocumentViewport* viewport) {
         
         m_userWarningConn = connect(viewport, &DocumentViewport::userWarning,
                 this, [this](const QString& message) {
-            QMessageBox::warning(this, tr("Warning"), message);
+            Md3::Dialog::alert(this, tr("Warning"), message);
         });
 
         // M.7.3: Handle linkObjectListMayHaveChanged signal (objects add/remove, tile eviction)
@@ -3320,14 +3319,14 @@ void MainWindow::showExportDialog()
     
     DocumentViewport* viewport = currentViewport();
     if (!viewport) {
-        QMessageBox::warning(this, dialogTitle, 
+        Md3::Dialog::alert(this, dialogTitle, 
                              tr("No document is currently open."));
         return;
     }
     
     Document* doc = viewport->document();
     if (!doc) {
-        QMessageBox::warning(this, dialogTitle,
+        Md3::Dialog::alert(this, dialogTitle,
                              tr("No document is currently open."));
         return;
     }
@@ -3343,9 +3342,8 @@ void MainWindow::showExportDialog()
             : tr("The document has unsaved changes.\n"
                  "Please save the document before exporting.\n\n"
                  "Would you like to save now?");
-        if (QMessageBox::question(this, tr("Save Document First"), savePrompt,
-                                  QMessageBox::Save | QMessageBox::Cancel)
-            != QMessageBox::Save) {
+        if (!Md3::Dialog::confirm(this, tr("Save Document First"), savePrompt,
+                                  tr("Save"))) {
             return;
         }
         saveDocument();
@@ -3367,7 +3365,7 @@ void MainWindow::showExportDialog()
                     + QString(" (%1).snbx").arg(counter++);
             }
             if (counter > 1000) {
-                QMessageBox::warning(
+                Md3::Dialog::alert(
                     this, dialogTitle,
                     tr("Could not find a unique filename. Please choose a different location."));
                 return;
@@ -3382,7 +3380,7 @@ void MainWindow::showExportDialog()
             if (doc->needsMaterialization()
                 && !doc->saveBundle(bundlePath, /*finalize=*/true)) {
                 QApplication::restoreOverrideCursor();
-                QMessageBox::warning(
+                Md3::Dialog::alert(
                     this, tr("Export Failed"),
                     tr("PDF sources could not be finalized. Repair the unavailable "
                        "sources and try again."));
@@ -3392,7 +3390,7 @@ void MainWindow::showExportDialog()
             QApplication::restoreOverrideCursor();
 
             if (!result.success) {
-                QMessageBox::warning(this, tr("Export Failed"), result.errorMessage);
+                Md3::Dialog::alert(this, tr("Export Failed"), result.errorMessage);
                 return;
             }
 #ifdef Q_OS_ANDROID
@@ -3410,7 +3408,7 @@ void MainWindow::showExportDialog()
 #else
             const double sizeMb =
                 static_cast<double>(result.fileSize) / (1024.0 * 1024.0);
-            QMessageBox::information(
+            Md3::Dialog::alert(
                 this, tr("Export Complete"),
                 tr("Notebook exported successfully.\n\nFile: %1\nSize: %2 MB")
                     .arg(QFileInfo(outputPath).fileName())
@@ -3429,7 +3427,7 @@ void MainWindow::showExportDialog()
         // document is the authoritative answer, and MuPdfExporter has no edgeless
         // support at all: pageCount() is 0, which surfaces as "Invalid page range".
         if (doc->isEdgeless()) {
-            QMessageBox::warning(this, dialogTitle,
+            Md3::Dialog::alert(this, dialogTitle,
                 tr("Edgeless canvases cannot be exported to PDF. "
                    "Export as a notebook package instead."));
             return;
@@ -3449,7 +3447,7 @@ void MainWindow::showExportDialog()
                 outputPath = outputDir + "/" + baseName + QString(" (%1).pdf").arg(counter++);
             }
             if (counter > maxAttempts) {
-                QMessageBox::warning(this, dialogTitle,
+                Md3::Dialog::alert(this, dialogTitle,
                     tr("Could not find a unique filename. Please choose a different location."));
                 return;
             }
@@ -3493,7 +3491,7 @@ void MainWindow::showExportDialog()
             IOSShareHelper::shareFile(outputPath, "application/pdf", tr("Share PDF"));
 #else
             // Desktop: Show success message
-            QMessageBox::information(this, tr("Export Complete"),
+            Md3::Dialog::alert(this, tr("Export Complete"),
                                      tr("PDF exported successfully!\n\n"
                                         "Pages exported: %1\n"
                                         "File size: %2 KB")
@@ -3501,7 +3499,7 @@ void MainWindow::showExportDialog()
                                      .arg(result.fileSizeBytes / 1024));
 #endif
         } else {
-            QMessageBox::warning(this, tr("Export Failed"),
+            Md3::Dialog::alert(this, tr("Export Failed"),
                                  tr("Failed to export PDF:\n%1").arg(result.errorMessage));
         }
     }
@@ -3731,9 +3729,9 @@ bool MainWindow::saveNewDocumentWithDialog(Document* doc)
     
     // Check if file exists and ask for overwrite confirmation
     if (QDir(filePath).exists()) {
-        if (QMessageBox::question(this, tr("Overwrite?"),
+        if (!Md3::Dialog::confirm(this, tr("Overwrite?"),
                 tr("A document named '%1' already exists.\nDo you want to replace it?").arg(docName),
-                QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+                tr("Replace"))) {
             return false;
         }
     }
@@ -3771,7 +3769,7 @@ bool MainWindow::saveNewDocumentWithDialog(Document* doc)
     
     // Save using DocumentManager
     if (!m_documentManager->saveDocumentAs(doc, filePath)) {
-        QMessageBox::critical(this, tr("Save Error"),
+        Md3::Dialog::alert(this, tr("Save Error"),
             tr("Failed to save document to:\n%1").arg(filePath));
         return false;
     }
@@ -3835,14 +3833,14 @@ void MainWindow::saveDocument()
 
     DocumentViewport* viewport = tabManager()->currentViewport();
     if (!viewport) {
-        QMessageBox::warning(this, tr("Save Document"), 
+        Md3::Dialog::alert(this, tr("Save Document"), 
             tr("No document is open."));
         return;
     }
 
     Document* doc = viewport->document();
     if (!doc) {
-        QMessageBox::warning(this, tr("Save Document"), 
+        Md3::Dialog::alert(this, tr("Save Document"), 
             tr("No document is open."));
                 return;
             }
@@ -3859,7 +3857,7 @@ void MainWindow::saveDocument()
     if (!existingPath.isEmpty() && !isUsingTemp) {
         // ✅ Document was previously saved to permanent location - save in-place
         if (!m_documentManager->saveDocument(doc)) {
-            QMessageBox::critical(this, tr("Save Error"),
+            Md3::Dialog::alert(this, tr("Save Error"),
                 tr("Failed to save document to:\n%1").arg(existingPath));
         return;
     }
@@ -3988,15 +3986,15 @@ void MainWindow::loadDocument()
     }
     
     if (snbNotebooks.isEmpty()) {
-        QMessageBox::information(this, tr("No Documents"),
+        Md3::Dialog::alert(this, tr("No Documents"),
             tr("No saved documents found.\n\nDocuments are saved to:\n%1").arg(notebooksDir));
         return;
     }
     
     // Show selection dialog
     bool ok;
-    QString selected = QInputDialog::getItem(this, tr("Open Document"),
-        tr("Select a document:"), snbNotebooks, 0, false, &ok);
+    QString selected = Md3::Dialog::selectItem(this, tr("Open Document"),
+        tr("Select a document:"), snbNotebooks, 0, &ok);
     
     if (!ok || selected.isEmpty()) {
         return; // User cancelled
@@ -4031,7 +4029,7 @@ void MainWindow::loadDocument()
     // Use DocumentManager to load the document (handles ownership, PDF reloading, etc.)
     Document* doc = m_documentManager->loadDocument(filePath);
     if (!doc) {
-        QMessageBox::critical(this, tr("Load Error"),
+        Md3::Dialog::alert(this, tr("Load Error"),
             tr("Failed to load document from:\n%1").arg(filePath));
         return;
     }
@@ -4217,7 +4215,7 @@ void MainWindow::deletePageInDocument()
     
     // Guard 1: Cannot delete the last page
     if (doc->pageCount() <= 1) {
-        QMessageBox::information(this, tr("Cannot Delete"),
+        Md3::Dialog::alert(this, tr("Cannot Delete"),
             tr("Cannot delete the last remaining page."));
         return;
     }
@@ -4273,7 +4271,7 @@ void MainWindow::importPagesFromOtherDocDebug()
 {
     DocumentViewport* destVp = currentViewport();
     if (!destVp || !destVp->document()) {
-        QMessageBox::information(this, tr("Page Import (Debug)"),
+        Md3::Dialog::alert(this, tr("Page Import (Debug)"),
                                  tr("No document is open in the active pane."));
         return;
     }
@@ -4309,7 +4307,7 @@ void MainWindow::importPagesFromOtherDocDebug()
     }
 
     if (!srcDoc || !srcVp) {
-        QMessageBox::information(this, tr("Page Import (Debug)"),
+        Md3::Dialog::alert(this, tr("Page Import (Debug)"),
                                  tr("Open a second document in another tab or split pane to import from."));
         return;
     }
@@ -4325,7 +4323,7 @@ void MainWindow::importPagesFromOtherDocDebug()
         }
     }
     if (srcUuids.isEmpty()) {
-        QMessageBox::information(this, tr("Page Import (Debug)"),
+        Md3::Dialog::alert(this, tr("Page Import (Debug)"),
                                  tr("Source document has no pages to import."));
         return;
     }
@@ -4333,7 +4331,7 @@ void MainWindow::importPagesFromOtherDocDebug()
     const int destIndex = qMin(destVp->currentPageIndex() + 1, destDoc->pageCount());
 
     if (!destVp->importPagesWithUndo(srcDoc, srcUuids, destIndex)) {
-        QMessageBox::warning(this, tr("Page Import (Debug)"),
+        Md3::Dialog::alert(this, tr("Page Import (Debug)"),
                              tr("Import failed."));
     }
 }
@@ -4385,7 +4383,7 @@ void MainWindow::copyPagesToOtherDocument(const QList<int>& srcRows)
     }
 
     if (candidates.isEmpty()) {
-        QMessageBox::information(this, tr("Copy Pages"),
+        Md3::Dialog::alert(this, tr("Copy Pages"),
             tr("Open another document in a tab or split pane to copy pages into it."));
         return;
     }
@@ -4417,7 +4415,7 @@ void MainWindow::copyPagesToOtherDocument(const QList<int>& srcRows)
     const int destIndex = qBound(0, dialog.insertIndex(), dest.doc->pageCount());
 
     if (!dest.vp->importPagesWithUndo(srcDoc, srcUuids, destIndex)) {
-        QMessageBox::warning(this, tr("Copy Pages"),
+        Md3::Dialog::alert(this, tr("Copy Pages"),
                              tr("Failed to copy the selected pages."));
         return;
     }
@@ -4427,7 +4425,7 @@ void MainWindow::copyPagesToOtherDocument(const QList<int>& srcRows)
     // does not run. Refresh the destination manually.
     refreshDestinationAfterImport(dest.vp, destIndex);
 
-    QMessageBox::information(this, tr("Copy Pages"),
+    Md3::Dialog::alert(this, tr("Copy Pages"),
         tr("Copied %n page(s) to \"%1\".", "", srcUuids.size())
             .arg(dest.doc->displayName()));
 }
@@ -4580,7 +4578,7 @@ void MainWindow::addPagesFromPdf(const QString& filePath,
     std::unique_ptr<Document> source =
         Document::createForPdf(QFileInfo(pdfPath).completeBaseName(), pdfPath);
     if (!source || !source->isPdfLoaded() || source->pdfPageCount() <= 0) {
-        QMessageBox::critical(
+        Md3::Dialog::alert(
             this, tr("PDF Error"),
             tr("The selected PDF could not be opened:\n%1").arg(pdfPath));
         return;
@@ -4608,7 +4606,7 @@ void MainWindow::addPagesFromPdf(const QString& filePath,
         m_searchEngine->clearCache();
     }
     if (!destination->importPagesWithUndo(source.get(), sourceUuids, insertIndex)) {
-        QMessageBox::warning(
+        Md3::Dialog::alert(
             this, tr("PDF Import"),
             tr("The selected PDF pages could not be added to this document."));
         if (currentViewport() == destination && m_pdfSearchBar
@@ -4699,7 +4697,7 @@ void MainWindow::openPdfDocument(const QString &filePath)
     // - Adds to recent documents
     Document* doc = m_documentManager->loadDocument(pdfPath);
     if (!doc) {
-        QMessageBox::critical(this, tr("PDF Error"),
+        Md3::Dialog::alert(this, tr("PDF Error"),
             tr("Failed to open PDF file:\n%1").arg(pdfPath));
         return;
     }
@@ -4896,7 +4894,7 @@ void MainWindow::loadFolderDocument()
     // This validation is specific to directory-based bundles
     QString manifestPath = bundlePath + "/document.json";
     if (!QFile::exists(manifestPath)) {
-        QMessageBox::critical(this, tr("Load Error"),
+        Md3::Dialog::alert(this, tr("Load Error"),
             tr("Selected folder is not a valid SpeedyNote bundle.\n"
                "Missing document.json manifest.\n\n%1").arg(bundlePath));
         return;
@@ -5016,7 +5014,7 @@ void MainWindow::showJumpToPageDialog() {
     int maxPage = vp->document()->pageCount();
     
     bool ok;
-    int newPage = QInputDialog::getInt(this, tr("Jump to Page"), tr("Enter Page Number:"), 
+    int newPage = Md3::Dialog::getInt(this, tr("Jump to Page"), tr("Enter Page Number:"), 
                                        currentPage, 1, maxPage, 1, &ok);
     if (ok) {
         // Convert 1-based user input to 0-based index for switchPage()
@@ -7631,12 +7629,12 @@ void MainWindow::convertOcrTextToTextBox(InsertedObject* obj)
         return;
     const QString objectId = ocrObj->id;
 
-    auto result = QMessageBox::question(this, tr("Convert OCR Text"),
+    const bool convertOcr = Md3::Dialog::confirm(this, tr("Convert OCR Text"),
         tr("Convert this recognized text into an editable text box?\n\n"
            "The recognized block is removed and its ink is excluded from "
            "future scans."),
-        QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
-    if (result != QMessageBox::Yes || !viewport)
+        tr("Convert"));
+    if (!convertOcr || !viewport)
         return;
 
     // The dialog ran an event loop, so an OCR rescan may have replaced the
@@ -7646,7 +7644,7 @@ void MainWindow::convertOcrTextToTextBox(InsertedObject* obj)
     if (!target) {
         // The user said yes and nothing happened, so say why rather than
         // leaving them to wonder whether the click registered.
-        QMessageBox::information(this, tr("Convert OCR Text"),
+        Md3::Dialog::alert(this, tr("Convert OCR Text"),
             tr("This recognized text is no longer available. "
                "A new scan may have replaced it."));
         return;
@@ -9356,27 +9354,25 @@ void MainWindow::closeEvent(QCloseEvent *event) {
                     if (bar) bar->setCurrentIndex(i);
 
                     QString docType = doc->isEdgeless() ? tr("canvas") : tr("document");
-                    QMessageBox::StandardButton reply = QMessageBox::question(
+                    const int choice = Md3::Dialog::choose(
                         this,
                         tr("Save Changes?"),
                         tr("The %1 \"%2\" has unsaved changes. Do you want to save before quitting?")
                             .arg(docType)
                             .arg(doc->displayName()),
-                        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-                        QMessageBox::Save
-                    );
+                        {tr("Discard"), tr("Cancel"), tr("Save")});
                     
-                    if (reply == QMessageBox::Cancel) {
+                    if (choice == 1 || choice < 0) {
                         return false;
                     }
                     
-                    if (reply == QMessageBox::Save) {
+                    if (choice == 2) {
                         QString existingPath = m_documentManager->documentPath(doc);
                         bool canSaveInPlace = !existingPath.isEmpty() && !isUsingTemp;
                         
                         if (canSaveInPlace) {
                             if (!m_documentManager->saveDocument(doc)) {
-                                QMessageBox::critical(this, tr("Save Error"),
+                                Md3::Dialog::alert(this, tr("Save Error"),
                                     tr("Failed to save document to:\n%1\n\nQuit anyway?").arg(existingPath));
                             }
                         } else {
@@ -9389,7 +9385,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
                         // mini-PDFs on quit (Save branch only) so the .snb is portable.
                         if (doc->needsMaterialization() && !doc->bundlePath().isEmpty()) {
                             if (!doc->saveBundle(doc->bundlePath(), /*finalize=*/true)) {
-                                QMessageBox::critical(
+                                Md3::Dialog::alert(
                                     this, tr("Save Error"),
                                     tr("PDF sources could not be finalized. Repair the "
                                        "unavailable sources before quitting."));
@@ -9403,7 +9399,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
                     // sources into bundled mini-PDFs, provided a real save location.
                     if (!isUsingTemp && doc->needsMaterialization() && !doc->bundlePath().isEmpty()) {
                         if (!doc->saveBundle(doc->bundlePath(), /*finalize=*/true)) {
-                            QMessageBox::critical(
+                            Md3::Dialog::alert(
                                 this, tr("Save Error"),
                                 tr("PDF sources could not be finalized. Repair the "
                                    "unavailable sources before quitting."));
@@ -9699,7 +9695,7 @@ bool MainWindow::closeDocumentById(const QString& documentId, bool discardChange
                         QString existingPath = m_documentManager->documentPath(doc);
                         if (!existingPath.isEmpty()) {
                             if (!m_documentManager->saveDocument(doc)) {
-                                QMessageBox::critical(this, tr("Save Error"),
+                                Md3::Dialog::alert(this, tr("Save Error"),
                                     tr("Failed to save document before closing."));
                                 result = false;
                                 return;
@@ -9746,7 +9742,7 @@ void MainWindow::openFileInNewTab(const QString &filePath)
     
     QFileInfo fileInfo(filePath);
     if (!fileInfo.exists()) {
-        QMessageBox::warning(this, tr("File Not Found"),
+        Md3::Dialog::alert(this, tr("File Not Found"),
             tr("The file does not exist:\n%1").arg(filePath));
         return;
     }
@@ -9781,7 +9777,7 @@ void MainWindow::openFileInNewTab(const QString &filePath)
     // DocumentManager handles all file types and manages document lifecycle
     Document* doc = m_documentManager->loadDocument(filePath);
     if (!doc) {
-        QMessageBox::critical(this, tr("Open Error"),
+        Md3::Dialog::alert(this, tr("Open Error"),
             tr("Failed to open file:\n%1").arg(filePath));
         return;
     }
@@ -9799,7 +9795,7 @@ void MainWindow::openFileInNewTab(const QString &filePath)
     int tabIndex = tabManager()->createTab(doc, doc->displayName());
     
     if (tabIndex < 0) {
-        QMessageBox::critical(this, tr("Open Error"),
+        Md3::Dialog::alert(this, tr("Open Error"),
             tr("Failed to create tab for:\n%1").arg(filePath));
         return;
     }
