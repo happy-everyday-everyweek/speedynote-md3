@@ -15,6 +15,7 @@
 
 #include "MainWindow.h"
 #include "ui/launcher/Launcher.h"
+#include "ui/md3/Md3Dialog.h"
 #include "ui/md3/Md3Theme.h"
 #include "platform/SystemNotification.h"
 #include "core/DocumentViewport.h"
@@ -1144,12 +1145,12 @@ int main(int argc, char* argv[])
         w->openFileInNewTab(inputFile);
 
         if (!sessionTabs.isEmpty()) {
-            auto reply = QMessageBox::question(w,
+            const bool restoreSession = Md3::Dialog::confirm(w,
                 QObject::tr("Restore Previous Session"),
                 QObject::tr("You had %1 other tab(s) open last time. Restore them?")
                     .arg(sessionTabs.size()),
-                QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
-            if (reply == QMessageBox::Yes) {
+                QObject::tr("Restore"));
+            if (restoreSession) {
                 for (const QString& path : sessionTabs)
                     w->openFileInNewTab(path);
                 int adjustedIndex = inputFileWasInSession
@@ -1162,13 +1163,13 @@ int main(int argc, char* argv[])
         registerMainWindowWithPlatform(w);
     } else if (!sessionTabs.isEmpty()) {
         // No file, but previous session exists - ask to restore.
-        auto reply = QMessageBox::question(sessionPromptParent,
+        const bool restoreSession = Md3::Dialog::confirm(sessionPromptParent,
             QObject::tr("Restore Previous Session"),
             QObject::tr("You had %1 tab(s) open last time. Restore them?")
                 .arg(sessionTabs.size()),
-            QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+            QObject::tr("Restore"));
 
-        if (reply == QMessageBox::Yes) {
+        if (restoreSession) {
             auto* w = new MainWindow();
             w->setAttribute(Qt::WA_DeleteOnClose);
             showMainWindowAtColdStart(w, launcher);
