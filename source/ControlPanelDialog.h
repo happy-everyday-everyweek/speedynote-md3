@@ -26,6 +26,8 @@ class MainWindow;
  * - Cache: Cache management (TODO: integrate with NotebookLibrary)
  * - About: Application info
  */
+namespace Md3 { class SegmentedButton; class Switch; }
+
 class ControlPanelDialog : public QDialog {
     Q_OBJECT
 
@@ -94,6 +96,8 @@ private:
     QColor selectedAccentColor;
     QCheckBox *pdfDarkModeCheckbox;
     QCheckBox *skipImageMaskingCheckbox;
+    Md3::SegmentedButton *themeModeSelector = nullptr;
+    Md3::Switch *dynamicColorSwitch = nullptr;
     void createThemeTab();
 
     // === Language tab ===
