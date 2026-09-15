@@ -1,4 +1,5 @@
 #include "FloatingActionButton.h"
+#include "../md3/Md3Motion.h"
 #include "../../compat/qt_compat.h"
 
 #include <QPainter>
@@ -144,11 +145,11 @@ void FloatingActionButton::setupAnimations()
 {
     m_expandAnim = new QPropertyAnimation(this, "expandProgress", this);
     m_expandAnim->setDuration(ANIMATION_DURATION);
-    m_expandAnim->setEasingCurve(QEasingCurve::OutCubic);
+    m_expandAnim->setEasingCurve(Md3::Motion::emphasizedDecelerate());
     
     m_rotateAnim = new QPropertyAnimation(this, "rotation", this);
     m_rotateAnim->setDuration(ANIMATION_DURATION);
-    m_rotateAnim->setEasingCurve(QEasingCurve::OutCubic);
+    m_rotateAnim->setEasingCurve(Md3::Motion::emphasizedDecelerate());
     
     m_animGroup = new QParallelAnimationGroup(this);
     m_animGroup->addAnimation(m_expandAnim);
