@@ -20,6 +20,7 @@
 #include <QColorDialog>
 #include <QInputDialog>
 #include <QMessageBox>
+#include "ui/md3/Md3Dialog.h"
 #include <QApplication>
 #include <QMetaObject>
 #include <QIcon>
@@ -1362,17 +1363,15 @@ void ControlPanelDialog::onShortcutItemDoubleClicked(QTreeWidgetItem* item, int 
                     conflictNames += "• " + sm->displayNameForAction(conflictId);
                 }
                 
-                QMessageBox::StandardButton reply = QMessageBox::warning(
+                const bool useAnyway = Md3::Dialog::confirm(
                     this,
                     tr("Shortcut Conflict"),
                     tr("The shortcut '%1' is already used by:\n%2\n\nDo you want to use it anyway?")
                         .arg(newShortcut)
                         .arg(conflictNames),
-                    QMessageBox::Yes | QMessageBox::No,
-                    QMessageBox::No
-                );
+                    tr("Use Anyway"));
                 
-                if (reply != QMessageBox::Yes) {
+                if (!useAnyway) {
                     return;
                 }
             }
@@ -1393,7 +1392,7 @@ void ControlPanelDialog::onEditShortcut()
     if (item) {
         onShortcutItemDoubleClicked(item, 0);
     } else {
-        QMessageBox::information(this, tr("No Selection"),
+        Md3::Dialog::alert(this, tr("No Selection"),
             tr("Please select a shortcut to edit."));
     }
 }
@@ -1402,7 +1401,7 @@ void ControlPanelDialog::onResetShortcut()
 {
     QTreeWidgetItem* item = shortcutsTree->currentItem();
     if (!item) {
-        QMessageBox::information(this, tr("No Selection"),
+        Md3::Dialog::alert(this, tr("No Selection"),
             tr("Please select a shortcut to reset."));
         return;
     }
@@ -1413,7 +1412,7 @@ void ControlPanelDialog::onResetShortcut()
     ShortcutManager* sm = ShortcutManager::instance();
     
     if (!sm->isUserOverridden(actionId)) {
-        QMessageBox::information(this, tr("Already Default"),
+        Md3::Dialog::alert(this, tr("Already Default"),
             tr("This shortcut is already using the default value."));
         return;
     }
@@ -1427,16 +1426,14 @@ void ControlPanelDialog::onResetShortcut()
 
 void ControlPanelDialog::onResetAllShortcuts()
 {
-    QMessageBox::StandardButton reply = QMessageBox::question(
+    const bool confirmed = Md3::Dialog::confirm(
         this,
         tr("Reset All Shortcuts"),
         tr("Are you sure you want to reset all shortcuts to their default values?\n\n"
            "This cannot be undone."),
-        QMessageBox::Yes | QMessageBox::No,
-        QMessageBox::No
-    );
+        tr("Reset"));
     
-    if (reply == QMessageBox::Yes) {
+    if (confirmed) {
         ShortcutManager* sm = ShortcutManager::instance();
         sm->resetAllToDefaults();
         sm->saveUserShortcuts();
@@ -1444,7 +1441,7 @@ void ControlPanelDialog::onResetAllShortcuts()
         // Refresh the entire tree
         populateShortcutsTree();
         
-        QMessageBox::information(this, tr("Shortcuts Reset"),
+        Md3::Dialog::alert(this, tr("Shortcuts Reset"),
             tr("All shortcuts have been reset to their default values."));
     }
 }
@@ -1641,7 +1638,7 @@ void ControlPanelDialog::addKeyboardMapping() {
     
     // Check if key sequence already exists
     if (mainWindowRef && mainWindowRef->getKeyboardMappings().contains(keySequence)) {
-        QMessageBox::warning(this, tr("Key Already Mapped"), 
+        Md3::Dialog::alert(this, tr("Key Already Mapped"), 
             tr("The key sequence '%1' is already mapped. Please choose a different key combination.").arg(keySequence));
         return;
     }
@@ -1649,9 +1646,9 @@ void ControlPanelDialog::addKeyboardMapping() {
     // Step 2: Choose action
     QStringList actions = ButtonMappingHelper::getTranslatedActions();
     bool ok;
-    QString selectedAction = QInputDialog::getItem(this, tr("Select Action"), 
+    QString selectedAction = Md3::Dialog::selectItem(this, tr("Select Action"), 
         tr("Choose the action to perform when '%1' is pressed:").arg(keySequence), 
-        actions, 0, false, &ok);
+        actions, 0, &ok);
     
     if (!ok || selectedAction.isEmpty()) {
         return;
@@ -1675,7 +1672,7 @@ void ControlPanelDialog::addKeyboardMapping() {
 void ControlPanelDialog::removeKeyboardMapping() {
     int currentRow = keyboardTable->currentRow();
     if (currentRow < 0) {
-        QMessageBox::information(this, tr("No Selection"), tr("Please select a mapping to remove."));
+        Md3::Dialog::alert(this, tr("No Selection"), tr("Please select a mapping to remove."));
         return;
     }
     
@@ -1685,7 +1682,7 @@ void ControlPanelDialog::removeKeyboardMapping() {
     QString keySequence = keyItem->text();
     
     // Confirm removal
-    int ret = QMessageBox::question(this, tr("Remove Mapping"), 
+    int ret = Md3::Dialog::choose(this, tr("Remove Mapping"), 
         tr("Are you sure you want to remove the keyboard shortcut '%1'?").arg(keySequence),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     
@@ -1843,17 +1840,16 @@ void ControlPanelDialog::createCacheTab() {
 
     connect(clearCacheButton, &QPushButton::clicked, [this, cacheSizeLabel]() {
         // ✅ DISK CLEANUP: Warn user to close notebooks first
-        QMessageBox::StandardButton reply = QMessageBox::question(
+        const bool confirmed = Md3::Dialog::confirm(
             this,
             tr("Clear Cache?"),
             tr("This will delete all temporary cache files.\n\n"
                "⚠️ WARNING: Make sure all notebooks are closed before clearing cache, "
                "otherwise you may lose unsaved changes!\n\n"
                "Continue?"),
-            QMessageBox::Yes | QMessageBox::No
-        );
+        tr("Continue"));
 
-        if (reply == QMessageBox::Yes) {
+        if (confirmed) {
             // Phase P.1: SpnPackageManager removed - cache cleanup will be reimplemented
             // TODO: Implement with NotebookLibrary::cleanupOrphanedTempDirs()
             
@@ -1863,7 +1859,7 @@ void ControlPanelDialog::createCacheTab() {
             cacheSizeLabel->setText(tr("Current cache size: %1").arg(newCacheSizeText));
 
             // Show feedback message
-            QMessageBox::information(this, tr("Cache Cleared"), 
+            Md3::Dialog::alert(this, tr("Cache Cleared"), 
                 tr("Cache cleanup is temporarily disabled during architecture migration."));
         }
     });
@@ -2152,7 +2148,7 @@ void ControlPanelDialog::createCompatibilityTab() {
 
 void ControlPanelDialog::selectFolderCompatibility() {
     if (!mainWindowRef) {
-        QMessageBox::warning(this, tr("Error"), tr("MainWindow reference not available."));
+        Md3::Dialog::alert(this, tr("Error"), tr("MainWindow reference not available."));
         return;
     }
     
@@ -2161,11 +2157,11 @@ void ControlPanelDialog::selectFolderCompatibility() {
     
     if (success) {
         // Show a confirmation message only if successful
-        QMessageBox::information(this, tr("Folder Selection"), 
+        Md3::Dialog::alert(this, tr("Folder Selection"), 
             tr("Folder selection completed successfully. You can now start taking notes in the selected folder."));
     } else {
         // Show appropriate message for cancellation
-        QMessageBox::information(this, tr("Folder Selection Cancelled"), 
+        Md3::Dialog::alert(this, tr("Folder Selection Cancelled"), 
             tr("Folder selection was cancelled. No changes were made."));
     }
 }
@@ -2254,7 +2250,7 @@ void ControlPanelDialog::detectStylusButton(bool isButtonA) {
             stylusButtonBLabel->setText(tr("Button B (%1):").arg(buttonName));
         }
         
-        QMessageBox::information(this, tr("Button Detected"), 
+        Md3::Dialog::alert(this, tr("Button Detected"), 
             tr("Stylus button successfully detected and assigned to %1.")
                 .arg(isButtonA ? tr("Button A") : tr("Button B")));
     }
