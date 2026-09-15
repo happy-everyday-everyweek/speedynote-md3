@@ -15,6 +15,8 @@ class QGraphicsOpacityEffect;
 class QHBoxLayout;
 class QLabel;
 class QLineEdit;
+class QListWidget;
+class QSpinBox;
 class QVariantAnimation;
 
 namespace Md3 {
@@ -55,6 +57,12 @@ public:
     QString textFieldValue() const;
     void focusTextField();
 
+    /// Inline list / integer field helpers (used by selectItem() / getInt()).
+    void addListField(const QStringList &items, int currentIndex = 0);
+    QString listFieldValue() const;
+    void addIntField(int value, int minValue, int maxValue, int step = 1);
+    int intFieldValue() const;
+
     /**
      * Fire-and-forget helper: builds a dialog with the given headline,
      * supporting text and action labels (default "OK"), invokes
@@ -90,6 +98,24 @@ public:
                            const QString &confirmLabel = QString(),
                            const QString &cancelLabel = QString());
 
+    /// List-selection dialog (single choice from `items`).
+    static QString selectItem(QWidget *host, const QString &headline,
+                              const QString &supporting,
+                              const QStringList &items,
+                              int currentIndex = 0,
+                              bool *ok = nullptr,
+                              const QString &confirmLabel = QString(),
+                              const QString &cancelLabel = QString());
+
+    /// Integer input dialog (clamped to [minValue, maxValue]).
+    static int getInt(QWidget *host, const QString &headline,
+                      const QString &supporting,
+                      int value,
+                      int minValue, int maxValue, int step = 1,
+                      bool *ok = nullptr,
+                      const QString &confirmLabel = QString(),
+                      const QString &cancelLabel = QString());
+
 signals:
     void actionTriggered(int index);
     void closed();
@@ -117,6 +143,8 @@ private:
     QHBoxLayout *m_actionsLayout = nullptr;
     QGraphicsOpacityEffect *m_panelOpacity = nullptr;
     QLineEdit *m_textField = nullptr;
+    QListWidget *m_listField = nullptr;
+    QSpinBox *m_intField = nullptr;
 
     QString m_headline;
     QString m_supporting;
