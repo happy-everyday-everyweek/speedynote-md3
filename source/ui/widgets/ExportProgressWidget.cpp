@@ -1,5 +1,6 @@
 #include "ExportProgressWidget.h"
 #include "../ThemeColors.h"
+#include "../md3/Md3Motion.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -53,6 +54,7 @@ ExportProgressWidget::ExportProgressWidget(QWidget* parent)
     // Fade animation - animate the opacity effect, not the widget directly
     m_fadeAnimation = new QPropertyAnimation(m_opacityEffect, "opacity", this);
     m_fadeAnimation->setDuration(FADE_DURATION_MS);
+    m_fadeAnimation->setEasingCurve(Md3::Motion::standard());
     connect(m_fadeAnimation, &QPropertyAnimation::finished,
             this, &ExportProgressWidget::onFadeAnimationFinished);
     
