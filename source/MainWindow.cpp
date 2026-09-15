@@ -65,6 +65,7 @@
 #include <QSpinBox>
 #include <QInputDialog>
 #include "ui/md3/Md3Dialog.h"
+#include "ui/md3/Md3Motion.h"
 #include <QStandardPaths>
 #include <QRegularExpression>  // BUG-A002: For filename sanitization on Android
 #include <QSettings>
@@ -8519,7 +8520,7 @@ void MainWindow::toggleLauncher() {
     }
     
     // Animation duration in milliseconds
-    const int fadeDuration = 150;
+    const int fadeDuration = Md3::Motion::Short3;
     
     if (launcher->isVisible()) {
         // ========== LAUNCHER → MAINWINDOW ==========
@@ -8581,7 +8582,7 @@ void MainWindow::toggleLauncher() {
         fadeIn->setDuration(fadeDuration);
         fadeIn->setStartValue(0.0);
         fadeIn->setEndValue(1.0);
-        fadeIn->setEasingCurve(QEasingCurve::OutCubic);
+        fadeIn->setEasingCurve(Md3::Motion::emphasizedDecelerate());
         fadeIn->start(QAbstractAnimation::DeleteWhenStopped);
         
     } else {
@@ -8624,7 +8625,7 @@ void MainWindow::toggleLauncher() {
         fadeIn->setDuration(fadeDuration);
         fadeIn->setStartValue(0.0);
         fadeIn->setEndValue(1.0);
-        fadeIn->setEasingCurve(QEasingCurve::OutCubic);
+        fadeIn->setEasingCurve(Md3::Motion::emphasizedDecelerate());
         fadeIn->start(QAbstractAnimation::DeleteWhenStopped);
     }
 }
@@ -9907,10 +9908,10 @@ void MainWindow::bringToFront()
     
     if (wasHidden) {
         auto* fadeIn = new QPropertyAnimation(this, "windowOpacity");
-        fadeIn->setDuration(150);
+        fadeIn->setDuration(Md3::Motion::Short3);
         fadeIn->setStartValue(0.0);
         fadeIn->setEndValue(1.0);
-        fadeIn->setEasingCurve(QEasingCurve::OutCubic);
+        fadeIn->setEasingCurve(Md3::Motion::emphasizedDecelerate());
         fadeIn->start(QAbstractAnimation::DeleteWhenStopped);
     }
 }
