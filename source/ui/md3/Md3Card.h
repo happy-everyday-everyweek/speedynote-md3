@@ -35,7 +35,7 @@ protected:
 
 private:
     Variant m_variant = Filled;
-    qreal m_radius = Shape::Medium;
+    qreal m_radius = Md3::Shape::Medium;
 };
 
 } // namespace Md3
