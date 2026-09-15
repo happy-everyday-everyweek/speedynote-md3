@@ -12,6 +12,7 @@
 #include "../ThemeColors.h"
 #include "../md3/Md3BottomSheet.h"
 #include "../md3/Md3Button.h"
+#include "../md3/Md3Dialog.h"
 #include "../md3/Md3Fab.h"
 #include "../md3/Md3IconUtils.h"
 #include "../md3/Md3NavigationBar.h"
@@ -1194,9 +1195,9 @@ void Launcher::showNotebookContextMenu(const QString& bundlePath, const QPoint& 
         QAction* newFolderAction = folderMenu->addAction(tr("+ New Folder..."));
         connect(newFolderAction, &QAction::triggered, this, [this, bundlePath]() {
             bool ok;
-            QString name = QInputDialog::getText(this, tr("New Folder"),
+            QString name = Md3::Dialog::getText(this, tr("New Folder"),
                                                   tr("Folder name:"), 
-                                                  QLineEdit::Normal, QString(), &ok);
+                                                  QString(), &ok);
             if (ok && !name.isEmpty()) {
                 NotebookLibrary::instance()->createStarredFolder(name);
                 NotebookLibrary::instance()->moveNotebooksToFolder({bundlePath}, name);
@@ -1264,9 +1265,9 @@ void Launcher::showFolderContextMenu(const QString& folderName, const QPoint& gl
     QAction* renameAction = menu.addAction(tr("Rename"));
     connect(renameAction, &QAction::triggered, this, [this, folderName]() {
         bool ok;
-        QString newName = QInputDialog::getText(this, tr("Rename Folder"),
+        QString newName = Md3::Dialog::getText(this, tr("Rename Folder"),
                                                  tr("New name:"),
-                                                 QLineEdit::Normal, folderName, &ok);
+                                                 folderName, &ok);
         if (ok && !newName.isEmpty() && newName != folderName) {
             NotebookLibrary* lib = NotebookLibrary::instance();
             
@@ -1286,15 +1287,14 @@ void Launcher::showFolderContextMenu(const QString& folderName, const QPoint& gl
     // Delete action
     QAction* deleteAction = menu.addAction(tr("Delete Folder"));
     connect(deleteAction, &QAction::triggered, this, [this, folderName]() {
-        QMessageBox::StandardButton reply = QMessageBox::question(
+        const bool confirmed = Md3::Dialog::confirm(
             this,
             tr("Delete Folder"),
             tr("Delete folder \"%1\"?\n\nNotebooks in this folder will become unfiled.").arg(folderName),
-            QMessageBox::Yes | QMessageBox::No,
-            QMessageBox::No
+            tr("Delete")
         );
         
-        if (reply == QMessageBox::Yes) {
+        if (confirmed) {
             NotebookLibrary::instance()->deleteStarredFolder(folderName);
         }
     });
@@ -1322,15 +1322,14 @@ bool Launcher::deleteNotebooks(const QStringList& bundlePaths)
     }
     
     // --- Confirmation dialog (adapts to single vs. batch) ---
-    QMessageBox::StandardButton reply;
+    bool confirmed = false;
     if (bundlePaths.size() == 1) {
         // Single notebook — same wording as the original deleteNotebook()
-        reply = QMessageBox::warning(
+        confirmed = Md3::Dialog::confirm(
             this,
             tr("Delete Notebook"),
             tr("Permanently delete \"%1\"?\n\nThis action cannot be undone.").arg(displayNames.first()),
-            QMessageBox::Yes | QMessageBox::No,
-            QMessageBox::No
+            tr("Delete")
         );
     } else {
         // Batch — show count and a (possibly truncated) name list
@@ -1343,18 +1342,17 @@ bool Launcher::deleteNotebooks(const QStringList& bundlePaths)
             nameList += tr("  ... and %1 more\n").arg(displayNames.size() - maxShown);
         }
         
-        reply = QMessageBox::warning(
+        confirmed = Md3::Dialog::confirm(
             this,
             tr("Delete Notebooks"),
             tr("Permanently delete %1 notebooks?\n\n%2\nThis action cannot be undone.")
                 .arg(bundlePaths.size())
                 .arg(nameList),
-            QMessageBox::Yes | QMessageBox::No,
-            QMessageBox::No
+            tr("Delete")
         );
     }
     
-    if (reply != QMessageBox::Yes)
+    if (!confirmed)
         return false;
     
     // --- Perform deletion for each notebook ---
@@ -1436,9 +1434,9 @@ void Launcher::renameNotebook(const QString& bundlePath)
     }
     
     bool ok;
-    QString newName = QInputDialog::getText(this, tr("Rename Notebook"),
+    QString newName = Md3::Dialog::getText(this, tr("Rename Notebook"),
                                              tr("New name:"),
-                                             QLineEdit::Normal, currentName, &ok);
+                                             currentName, &ok);
     
     if (!ok || newName.isEmpty() || newName == currentName) {
         return;
@@ -1455,8 +1453,8 @@ void Launcher::renameNotebook(const QString& bundlePath)
     
     // Check if target exists
     if (QDir(newPath).exists()) {
-        QMessageBox::warning(this, tr("Rename Failed"),
-                            tr("A notebook named \"%1\" already exists.").arg(newName));
+        Md3::Dialog::alert(this, tr("Rename Failed"),
+                           tr("A notebook named \"%1\" already exists.").arg(newName));
         return;
     }
     
@@ -1506,8 +1504,8 @@ void Launcher::renameNotebook(const QString& bundlePath)
                        << bundlePath << "to" << newPath;
         }
     } else {
-        QMessageBox::warning(this, tr("Rename Failed"),
-                            tr("Could not rename the notebook."));
+        Md3::Dialog::alert(this, tr("Rename Failed"),
+                           tr("Could not rename the notebook."));
     }
 }
 
@@ -1539,16 +1537,16 @@ void Launcher::duplicateNotebook(const QString& bundlePath)
     // Copy the directory recursively
     QDir sourceDir(bundlePath);
     if (!sourceDir.exists()) {
-        QMessageBox::warning(this, tr("Duplicate Failed"),
-                            tr("Source notebook not found."));
+        Md3::Dialog::alert(this, tr("Duplicate Failed"),
+                           tr("Source notebook not found."));
         return;
     }
     
     // Create destination directory
     QDir destDir(newPath);
     if (!destDir.mkpath(".")) {
-        QMessageBox::warning(this, tr("Duplicate Failed"),
-                            tr("Could not create destination directory."));
+        Md3::Dialog::alert(this, tr("Duplicate Failed"),
+                           tr("Could not create destination directory."));
         return;
     }
     
@@ -1578,8 +1576,8 @@ void Launcher::duplicateNotebook(const QString& bundlePath)
         // Add to library
         NotebookLibrary::instance()->addToRecent(newPath);
     } else {
-        QMessageBox::warning(this, tr("Duplicate"),
-                            tr("Some files could not be copied."));
+        Md3::Dialog::alert(this, tr("Duplicate"),
+                           tr("Some files could not be copied."));
     }
 }
 
