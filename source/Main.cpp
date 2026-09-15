@@ -925,7 +925,9 @@ int main(int argc, char* argv[])
     // Material Design 3 theme layer: rebuild the palette from the seed
     // color (tonal palettes) and apply the app-wide MD3 stylesheet.
     Md3::Theme::instance().load();
+    Md3::Theme::instance().applyDynamicColor();
     Md3::Theme::instance().setDarkMode(isAndroidDarkMode());
+    Md3::Theme::instance().followSystemColorScheme();
     Md3::Theme::instance().applyToApplication(&app);
     app.setStyleSheet(Md3::Theme::instance().applicationStyleSheet());
 #elif defined(Q_OS_IOS)
