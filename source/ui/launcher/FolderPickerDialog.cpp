@@ -1,5 +1,6 @@
 #include "FolderPickerDialog.h"
 #include "../ThemeColors.h"
+#include "../md3/Md3Dialog.h"
 #include "../../core/NotebookLibrary.h"
 
 #include <QVBoxLayout>
@@ -368,11 +369,10 @@ void FolderPickerDialog::onFolderClicked(QListWidgetItem* item)
 void FolderPickerDialog::onNewFolderClicked()
 {
     bool ok;
-    QString folderName = QInputDialog::getText(
+    QString folderName = Md3::Dialog::getText(
         this,
         tr("New Folder"),
         tr("Folder name:"),
-        QLineEdit::Normal,
         QString(),
         &ok
     );
@@ -386,7 +386,7 @@ void FolderPickerDialog::onNewFolderClicked()
     // Check if folder already exists
     NotebookLibrary* lib = NotebookLibrary::instance();
     if (lib->starredFolders().contains(folderName, Qt::CaseInsensitive)) {
-        QMessageBox::warning(
+        Md3::Dialog::alert(
             this,
             tr("Folder Exists"),
             tr("A folder named \"%1\" already exists.").arg(folderName)
@@ -454,7 +454,7 @@ void FolderPickerDialog::deleteFolder(const QString& folderName)
 {
     // Double-check it's empty
     if (!isFolderEmpty(folderName)) {
-        QMessageBox::warning(
+        Md3::Dialog::alert(
             this,
             tr("Cannot Delete"),
             tr("Folder \"%1\" contains notebooks. Remove notebooks from the folder first.").arg(folderName)
@@ -463,15 +463,14 @@ void FolderPickerDialog::deleteFolder(const QString& folderName)
     }
     
     // Confirm deletion
-    QMessageBox::StandardButton reply = QMessageBox::question(
+    const bool confirmed = Md3::Dialog::confirm(
         this,
         tr("Delete Folder"),
         tr("Delete folder \"%1\"?").arg(folderName),
-        QMessageBox::Yes | QMessageBox::No,
-        QMessageBox::No
+        tr("Delete")
     );
     
-    if (reply != QMessageBox::Yes) {
+    if (!confirmed) {
         return;
     }
     
