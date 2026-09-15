@@ -94,10 +94,10 @@ QSize Slider::minimumSizeHint() const
     return QSize(120, kTouch);
 }
 
-void Slider::paintEvent(QPaintEvent *)
+void Slider::paintEvent(QPaintEvent *event)
 {
     if (orientation() != Qt::Horizontal) {
-        QSlider::paintEvent(nullptr);
+        QSlider::paintEvent(event);
         return;
     }
 
