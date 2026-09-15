@@ -4,6 +4,7 @@
 #include "../widgets/LinkSlotButton.h"
 #include "../widgets/ColorPresetButton.h"
 #include "../widgets/ToggleButton.h"  // Contains SubToolbarToggle
+#include "../md3/Md3Dialog.h"
 
 #include <QAction>
 #include <QApplication>
@@ -388,15 +389,14 @@ bool LinkObjectBar::confirmSlotDelete(int index)
                          "annotation, freeing it at both ends.");
     }
 
-    QMessageBox::StandardButton result = QMessageBox::question(
+    const bool confirmed = Md3::Dialog::confirm(
         this,
         tr("Clear Slot"),
         question,
-        QMessageBox::Yes | QMessageBox::No,
-        QMessageBox::No
+        tr("Clear")
     );
 
-    return result == QMessageBox::Yes;
+    return confirmed;
 }
 
 void LinkObjectBar::setDarkMode(bool darkMode)
