@@ -17,6 +17,7 @@
 #include "../md3/Md3IconUtils.h"
 #include "../md3/Md3NavigationBar.h"
 #include "../md3/Md3Theme.h"
+#include "../md3/Md3Motion.h"
 #include "../md3/Md3TopAppBar.h"
 #include "../dialogs/BatchExportDialog.h"
 #include "../dialogs/ExportResultsDialog.h"
@@ -272,7 +273,8 @@ void Launcher::setupUi()
         setupExportProgress();
 
         m_fadeAnimation = new QPropertyAnimation(this, "fadeOpacity", this);
-        m_fadeAnimation->setDuration(200);
+        m_fadeAnimation->setDuration(Md3::Motion::Short4);
+        m_fadeAnimation->setEasingCurve(Md3::Motion::standard());
 
         switchToView(View::Timeline);
         return;
@@ -324,7 +326,8 @@ void Launcher::setupUi()
     
     // Fade animation
     m_fadeAnimation = new QPropertyAnimation(this, "fadeOpacity", this);
-    m_fadeAnimation->setDuration(200);
+    m_fadeAnimation->setDuration(Md3::Motion::Short4);
+    m_fadeAnimation->setEasingCurve(Md3::Motion::standard());
     
     // Set initial view
     switchToView(View::Timeline);
