@@ -9,9 +9,11 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QListWidget>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QScreen>
+#include <QSpinBox>
 #include <QVBoxLayout>
 #include <QVariantAnimation>
 
@@ -161,6 +163,28 @@ void Dialog::updateColors()
                  c.primary.name(),
                  c.primary.name()));
     }
+    if (m_listField) {
+        m_listField->setStyleSheet(QStringLiteral(
+            "QListWidget { background: transparent; border: none; outline: none; }"
+            "QListWidget::item { padding: 12px 16px; border-radius: 8px; color: %1; }"
+            "QListWidget::item:hover { background: %2; }"
+            "QListWidget::item:selected { background: %3; color: %4; }")
+            .arg(c.onSurface.name(),
+                 c.surfaceContainerHighest.name(),
+                 c.secondaryContainer.name(),
+                 c.onSecondaryContainer.name()));
+    }
+    if (m_intField) {
+        m_intField->setStyleSheet(QStringLiteral(
+            "QSpinBox { background: %1; color: %2; border: none;"
+            " border-top-left-radius: 4px; border-top-right-radius: 4px;"
+            " border-bottom: 1px solid %3; padding: 12px 16px;"
+            " selection-background-color: %4; }")
+            .arg(c.surfaceContainerHighest.name(),
+                 c.onSurface.name(),
+                 c.outline.name(),
+                 c.primary.name()));
+    }
 }
 
 void Dialog::setHeadline(const QString &text)
@@ -241,6 +265,69 @@ void Dialog::focusTextField()
     if (m_textField) {
         m_textField->setFocus();
     }
+}
+
+void Dialog::addListField(const QStringList &items, int currentIndex)
+{
+    if (!m_listField) {
+        auto *layout = qobject_cast<QVBoxLayout *>(m_panel->layout());
+        if (!layout) {
+            return;
+        }
+        m_listField = new QListWidget(m_panel);
+        m_listField->setFont(Theme::instance().font(TypeRole::BodyLarge));
+        m_listField->setSelectionMode(QAbstractItemView::SingleSelection);
+        m_listField->setMinimumHeight(48);
+        m_listField->setMaximumHeight(280);
+        m_listField->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        const int actionsIndex = layout->indexOf(m_actionsRow);
+        const int insertAt = actionsIndex >= 0 ? actionsIndex : layout->count();
+        layout->insertWidget(insertAt, m_listField);
+        layout->insertSpacing(insertAt + 1, 16);
+        updateColors();
+    }
+    m_listField->clear();
+    m_listField->addItems(items);
+    if (currentIndex >= 0 && currentIndex < m_listField->count()) {
+        m_listField->setCurrentRow(currentIndex);
+    }
+    updateGeometryToHost();
+}
+
+QString Dialog::listFieldValue() const
+{
+    return m_listField && m_listField->currentItem()
+        ? m_listField->currentItem()->text() : QString();
+}
+
+void Dialog::addIntField(int value, int minValue, int maxValue, int step)
+{
+    if (!m_intField) {
+        auto *layout = qobject_cast<QVBoxLayout *>(m_panel->layout());
+        if (!layout) {
+            return;
+        }
+        m_intField = new QSpinBox(m_panel);
+        m_intField->setFont(Theme::instance().font(TypeRole::HeadlineSmall));
+        m_intField->setMinimumHeight(56);
+        m_intField->setFrame(false);
+        m_intField->setButtonSymbols(QAbstractSpinBox::PlusMinus);
+        m_intField->setAlignment(Qt::AlignCenter);
+        const int actionsIndex = layout->indexOf(m_actionsRow);
+        const int insertAt = actionsIndex >= 0 ? actionsIndex : layout->count();
+        layout->insertWidget(insertAt, m_intField);
+        layout->insertSpacing(insertAt + 1, 16);
+        updateColors();
+    }
+    m_intField->setRange(minValue, maxValue);
+    m_intField->setSingleStep(step);
+    m_intField->setValue(value);
+    updateGeometryToHost();
+}
+
+int Dialog::intFieldValue() const
+{
+    return m_intField ? m_intField->value() : 0;
 }
 
 void Dialog::updateGeometryToHost()
@@ -497,6 +584,68 @@ QString Dialog::getText(QWidget *host, const QString &headline, const QString &s
         *ok = accepted;
     }
     return accepted ? dialog.textFieldValue() : QString();
+}
+
+QString Dialog::selectItem(QWidget *host, const QString &headline, const QString &supporting,
+                           const QStringList &items, int currentIndex, bool *ok,
+                           const QString &confirmLabel, const QString &cancelLabel)
+{
+    Dialog dialog(host);
+    dialog.setHeadline(headline);
+    if (!supporting.isEmpty()) {
+        dialog.setSupportingText(supporting);
+    }
+    dialog.addListField(items, currentIndex);
+
+    bool accepted = false;
+    dialog.addAction(cancelLabel.isEmpty() ? QObject::tr("Cancel") : cancelLabel);
+    dialog.addAction(confirmLabel.isEmpty() ? QObject::tr("OK") : confirmLabel,
+                     [&accepted]() { accepted = true; });
+
+    if (dialog.m_listField) {
+        QObject::connect(dialog.m_listField, &QListWidget::itemDoubleClicked, &dialog,
+                         [&dialog, &accepted]() {
+            accepted = true;
+            dialog.close();
+        });
+    }
+
+    QEventLoop loop;
+    QObject::connect(&dialog, &Dialog::closed, &loop, &QEventLoop::quit);
+    dialog.open();
+    loop.exec();
+
+    if (ok) {
+        *ok = accepted;
+    }
+    return accepted ? dialog.listFieldValue() : QString();
+}
+
+int Dialog::getInt(QWidget *host, const QString &headline, const QString &supporting,
+                   int value, int minValue, int maxValue, int step, bool *ok,
+                   const QString &confirmLabel, const QString &cancelLabel)
+{
+    Dialog dialog(host);
+    dialog.setHeadline(headline);
+    if (!supporting.isEmpty()) {
+        dialog.setSupportingText(supporting);
+    }
+    dialog.addIntField(value, minValue, maxValue, step);
+
+    bool accepted = false;
+    dialog.addAction(cancelLabel.isEmpty() ? QObject::tr("Cancel") : cancelLabel);
+    dialog.addAction(confirmLabel.isEmpty() ? QObject::tr("OK") : confirmLabel,
+                     [&accepted]() { accepted = true; });
+
+    QEventLoop loop;
+    QObject::connect(&dialog, &Dialog::closed, &loop, &QEventLoop::quit);
+    dialog.open();
+    loop.exec();
+
+    if (ok) {
+        *ok = accepted;
+    }
+    return accepted ? dialog.intFieldValue() : value;
 }
 
 } // namespace Md3
