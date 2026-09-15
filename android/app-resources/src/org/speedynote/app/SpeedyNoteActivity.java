@@ -53,9 +53,20 @@ public class SpeedyNoteActivity extends QtActivity {
     // Cached content view for unbuffered dispatch (performance optimization)
     // Avoids calling findViewById() on every touch event at 240Hz
     private View mCachedContentView = null;
+
+    // ===== Native shell launch contract =====
+    // The Material 3 LauncherActivity starts this activity with an editor
+    // action ("open" / "new-edgeless" / "new-paged" / "open-pdf" /
+    // "open-notebook"); Qt's main() reads it through the static fields.
+    public static final String EXTRA_ACTION = "org.speedynote.app.EXTRA_ACTION";
+    public static final String EXTRA_PATH = "org.speedynote.app.EXTRA_PATH";
+
+    private static volatile String sPendingAction = null;
+    private static volatile String sPendingPath = null;
     
     @Override
     public void onCreate(android.os.Bundle savedInstanceState) {
+        captureLaunchIntent(getIntent());
         super.onCreate(savedInstanceState);
         sInstance = this;
     }
@@ -67,6 +78,60 @@ public class SpeedyNoteActivity extends QtActivity {
         }
         super.onDestroy();
     }
+
+    /**
+     * Stash an editor action for Qt's main() (called before super.onCreate
+     * so the action is visible when the native Qt loop starts).
+     */
+    private void captureLaunchIntent(Intent intent) {
+        if (intent == null) {
+            return;
+        }
+        String action = intent.getStringExtra(EXTRA_ACTION);
+        if (action != null) {
+            sPendingAction = action;
+            sPendingPath = intent.getStringExtra(EXTRA_PATH);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        captureLaunchIntent(intent);
+        if (intent == null) {
+            return;
+        }
+        String action = intent.getStringExtra(EXTRA_ACTION);
+        if (action == null) {
+            return;
+        }
+        String path = intent.getStringExtra(EXTRA_PATH);
+        try {
+            nativeHandleIntent(action, path == null ? "" : path);
+        } catch (Throwable t) {
+            Log.w(TAG, "nativeHandleIntent not available: " + t);
+        }
+    }
+
+    /** Called from C++ after the pending launch action was consumed. */
+    public static void clearPendingLaunch() {
+        sPendingAction = null;
+        sPendingPath = null;
+    }
+
+    /** Pending editor action stashed by the launcher (read from C++). */
+    public static String getPendingAction() {
+        return sPendingAction;
+    }
+
+    /** Pending editor path stashed by the launcher (read from C++). */
+    public static String getPendingPath() {
+        return sPendingPath;
+    }
+
+    /** Implemented in C++ (source/Main.cpp); delivers onNewIntent actions. */
+    private static native void nativeHandleIntent(String action, String path);
     
     /**
      * Check if the system is in dark mode.
