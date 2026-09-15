@@ -1,5 +1,6 @@
 #include "Md3TextField.h"
 
+#include <QEvent>
 #include <QFontMetricsF>
 #include <QLineEdit>
 #include <QPainter>
