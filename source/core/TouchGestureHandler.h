@@ -77,6 +77,15 @@ public:
      * Ends any active gesture if mode changes.
      */
     void setMode(TouchGestureMode mode);
+
+    /**
+     * @brief Enable/disable finger drawing for the next touch dispatch.
+     *
+     * When active, single-finger touches are not consumed so they fall
+     * through to Qt's synthesized-mouse drawing path; two-finger touches
+     * still pan/zoom. Refreshed by the viewport before each event.
+     */
+    void setFingerDrawingActive(bool active) { m_fingerDrawingActive = active; }
     
     /**
      * @brief Get the current touch gesture mode.
@@ -104,6 +113,7 @@ private:
     TouchGestureMode m_mode = TouchGestureMode::Disabled;
     
     // ===== Single-finger Pan Tracking =====
+    bool m_fingerDrawingActive = false;      ///< Touch-as-pen active for this dispatch
     bool m_panActive = false;                ///< Whether a touch pan is in progress
     QPointF m_lastPos;                       ///< Last touch position (viewport coords)
     
