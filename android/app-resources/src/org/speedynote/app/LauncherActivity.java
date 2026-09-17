@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -92,7 +93,7 @@ public class LauncherActivity extends AppCompatActivity implements NoteCardAdapt
         // navigation bar below the list and the FAB).
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         View root = findViewById(R.id.root);
-        ViewCompat.setOnApplyWindowInsetsListener(root, new View.OnApplyWindowInsetsListener() {
+        ViewCompat.setOnApplyWindowInsetsListener(root, new OnApplyWindowInsetsListener() {
             @Override
             public WindowInsetsCompat onApplyWindowInsets(View v, WindowInsetsCompat windowInsets) {
                 Insets bars = windowInsets.getInsets(
