@@ -420,6 +420,20 @@ bool TouchGestureHandler::handleTouchEvent(QTouchEvent* event)
         m_velocitySamples.clear();
     }
     
+    // ===== Finger drawing (touch-as-pen) =====
+    // With finger drawing active, a single finger is not consumed so Qt
+    // synthesizes mouse events and the normal drawing pipeline runs.
+    // Two fingers still drive pan/zoom; a partial finger stroke is
+    // discarded when the second finger takes over.
+    if (m_fingerDrawingActive) {
+        const int fingerCount = qMax(m_activeTouchPoints,
+                                     static_cast<int>(activePoints.size()));
+        if (fingerCount <= 1 && !m_pinchActive && !m_panActive) {
+            return false;  // not consumed -> synthesized mouse -> draw
+        }
+        m_viewport->cancelFingerDrawStrokeIfActive();
+    }
+    
     // ===== TouchBegin =====
     if (event->type() == QEvent::TouchBegin) {
 #ifdef SPEEDYNOTE_DEBUG
