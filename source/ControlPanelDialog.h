@@ -129,6 +129,9 @@ private:
     void onOpenConfigFolder();
     void updateShortcutDisplay(QTreeWidgetItem* item, const QString& actionId);
 
+    // === Tools tab: touch input ===
+    QCheckBox *fingerDrawingCheck = nullptr;
+
 #ifdef Q_OS_LINUX
     // === Stylus tab (Linux only) ===
     QWidget *stylusTab;
