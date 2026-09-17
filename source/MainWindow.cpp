@@ -373,6 +373,7 @@ MainWindow::MainWindow(QWidget *parent)
             }
 #endif
             vp->setTouchGestureMode(effectiveMode);
+            vp->setFingerDrawingEnabled(m_fingerDrawingEnabled);
         }
         
         // Refresh OS window title + NavigationBar filename label from the
@@ -5566,6 +5567,7 @@ void MainWindow::setTouchGestureMode(TouchGestureMode mode) {
         } else
 #endif
         vp->setTouchGestureMode(mode);
+        vp->setFingerDrawingEnabled(m_fingerDrawingEnabled);
     }
     
     // Sync toolbar button state (prevents button from being out of sync after settings load)
@@ -5580,6 +5582,19 @@ void MainWindow::setTouchGestureMode(TouchGestureMode mode) {
     settings.setValue("touchGestureMode", static_cast<int>(mode));
 }
 
+bool MainWindow::isFingerDrawingEnabled() const {
+    return m_fingerDrawingEnabled;
+}
+void MainWindow::setFingerDrawingEnabled(bool enabled) {
+    m_fingerDrawingEnabled = enabled;
+    
+    QSettings settings("SpeedyNote", "App");
+    settings.setValue("touch/fingerDrawing", enabled);
+    
+    if (DocumentViewport* vp = currentViewport()) {
+        vp->setFingerDrawingEnabled(enabled);
+    }
+}
 void MainWindow::cycleTouchGestureMode() {
     // Cycle: Disabled -> YAxisOnly -> Full -> Disabled
     switch (touchGestureMode) {
@@ -5602,6 +5617,19 @@ void MainWindow::loadUserSettings() {
     int savedMode = settings.value("touchGestureMode", static_cast<int>(TouchGestureMode::Full)).toInt();
     touchGestureMode = static_cast<TouchGestureMode>(savedMode);
     setTouchGestureMode(touchGestureMode);
+
+    // Finger drawing: touch input acts as a pen (single finger draws,
+    // two fingers pan/zoom). On by default for Android devices, which
+    // are commonly used without a stylus.
+#ifdef Q_OS_ANDROID
+    const bool fingerDrawingDefault = true;
+#else
+    const bool fingerDrawingDefault = false;
+#endif
+    m_fingerDrawingEnabled = settings.value("touch/fingerDrawing", fingerDrawingDefault).toBool();
+    if (DocumentViewport* vp = currentViewport()) {
+        vp->setFingerDrawingEnabled(m_fingerDrawingEnabled);
+    }
     
 #ifdef Q_OS_LINUX
     // Load palm rejection settings (Linux only)
@@ -8506,7 +8534,11 @@ void MainWindow::toggleLauncher() {
     // in-process Qt Launcher is never used on Android.
     QJniObject activity = QNativeInterface::QAndroidApplication::context();
     if (activity.isValid()) {
-        activity.callMethod<void>("finish", "()V");
+        // Finish from inside a Qt event handler can tear the activity down
+        // mid-dispatch; defer one event-loop turn so Qt unwinds cleanly first.
+        QTimer::singleShot(0, [activity]() mutable {
+            activity.callMethod<void>("finish", "()V");
+        });
     }
     return;
 #endif
