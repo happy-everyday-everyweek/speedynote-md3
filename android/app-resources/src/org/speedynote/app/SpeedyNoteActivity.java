@@ -84,6 +84,10 @@ public class SpeedyNoteActivity extends QtActivity {
      * so the action is visible when the native Qt loop starts).
      */
     private void captureLaunchIntent(Intent intent) {
+        // Reset first: a reused static field must never leak a previous
+        // launch's action into a new editor session.
+        sPendingAction = null;
+        sPendingPath = null;
         if (intent == null) {
             return;
         }
