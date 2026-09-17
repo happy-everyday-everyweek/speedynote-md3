@@ -8,4 +8,14 @@
     <style name="Theme.SpeedyNote.Launcher" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowBackground">?attr/colorSurface</item>
     </style>
+
+    <!--
+        Theme for the editor activity (hosts the Qt canvas). Opts out of the
+        Android 15 forced edge-to-edge so the Qt window keeps the classic
+        system-bar insets it was designed for (no content under the bars).
+        The attribute is ignored on older Android versions.
+    -->
+    <style name="Theme.SpeedyNote.Editor" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" android:value="true"/>
+    </style>
 </resources>
