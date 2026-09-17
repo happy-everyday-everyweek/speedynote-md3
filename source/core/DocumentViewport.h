@@ -2597,6 +2597,26 @@ public slots:
      * - Full: Single-finger pan + pinch-to-zoom
      */
     void setTouchGestureMode(TouchGestureMode mode);
+
+    /**
+     * @brief Enable or disable finger drawing (touch acts as a pen).
+     *
+     * When enabled and the stylus has not been used recently, a single
+     * finger draws on the canvas while two fingers still pan/zoom. The
+     * stylus keeps priority: touch drawing pauses for a short window
+     * after any stylus activity (palm rejection).
+     */
+    void setFingerDrawingEnabled(bool enabled);
+    bool isFingerDrawingEnabled() const { return m_fingerDrawingEnabled; }
+
+    /**
+     * @brief Discard the in-flight finger-drawn stroke, if any.
+     *
+     * Called by the touch gesture handler when a two-finger gesture
+     * takes over from a stroke that started via synthesized mouse.
+     * Committed strokes are never touched, so nothing enters undo.
+     */
+    void cancelFingerDrawStrokeIfActive();
     
     /**
      * @brief Get the current touch gesture mode.
@@ -3723,6 +3743,10 @@ private:
 
     // ===== Stroke Drawing State (Task 2.2) =====
     VectorStroke m_currentStroke;             ///< Stroke currently being drawn
+    // ===== Finger drawing (touch-as-pen) =====
+    bool m_fingerDrawingEnabled = false;      ///< Touch draws when no stylus is active
+    qint64 m_lastStylusActivityMs = 0;        ///< Last stylus event timestamp (ms)
+    bool fingerDrawingActive() const;         ///< Enabled and no recent stylus activity
     bool m_isDrawing = false;                 ///< True while actively drawing a stroke
     
     /// Point decimation threshold in screen pixels (performance tuning, not user-facing).
