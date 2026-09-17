@@ -63,6 +63,7 @@
         <!-- Editor: hosts the Qt canvas; stays the PDF/.snb VIEW target. -->
         <activity
             android:name="org.speedynote.app.SpeedyNoteActivity"
+            android:theme="@style/Theme.SpeedyNote.Editor"
             android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
             android:label="SpeedyNote"
             android:launchMode="singleTop"
