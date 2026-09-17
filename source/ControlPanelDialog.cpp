@@ -1179,6 +1179,25 @@ void ControlPanelDialog::createToolsTab()
 
     layout->addWidget(panGroup);
 
+    // --- Touch input group ---
+    QGroupBox *touchInputGroup = new QGroupBox(tr("Touch input"), toolsTab);
+    QVBoxLayout *touchInputLayout = new QVBoxLayout(touchInputGroup);
+    fingerDrawingCheck = new QCheckBox(tr("Allow finger drawing"), touchInputGroup);
+    fingerDrawingCheck->setChecked(mainWindowRef->isFingerDrawingEnabled());
+    touchInputLayout->addWidget(fingerDrawingCheck);
+    QLabel *fingerDrawHint = new QLabel(
+        tr("When enabled, a single finger draws on the canvas "
+           "(two fingers pan and zoom). Finger drawing pauses while the "
+           "stylus is in use."),
+        touchInputGroup);
+    fingerDrawHint->setWordWrap(true);
+    fingerDrawHint->setStyleSheet("color: gray; font-size: 11px;");
+    touchInputLayout->addWidget(fingerDrawHint);
+    connect(fingerDrawingCheck, &QCheckBox::toggled, this, [this](bool checked) {
+        mainWindowRef->setFingerDrawingEnabled(checked);
+    });
+    layout->addWidget(touchInputGroup);
+
     // --- OCR settings group ---
     QGroupBox *ocrGroup = new QGroupBox(tr("OCR (Handwriting Recognition)"), toolsTab);
     QVBoxLayout *ocrLayout = new QVBoxLayout(ocrGroup);
