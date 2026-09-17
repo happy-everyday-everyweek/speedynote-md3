@@ -4488,6 +4488,10 @@ void DocumentViewport::leaveEvent(QEvent* event)
 
 void DocumentViewport::tabletEvent(QTabletEvent* event)
 {
+    // Touch-as-pen: any stylus activity refreshes the "stylus in use"
+    // timestamp so finger drawing pauses while the pen is around.
+    m_lastStylusActivityMs = QDateTime::currentMSecsSinceEpoch();
+
     // A mouse press whose release never arrived leaves an armed off-page pan
     // behind, and the mouse-gesture guard further down would then swallow every
     // pen event for the rest of the session. Only a pan that has started
@@ -4989,6 +4993,41 @@ void DocumentViewport::onGestureTimeout()
 
 // ===== Touch Gesture Mode (Task TG.1) =====
 
+void DocumentViewport::setFingerDrawingEnabled(bool enabled)
+{
+    if (m_fingerDrawingEnabled == enabled)
+        return;
+    m_fingerDrawingEnabled = enabled;
+    // Turning the feature off while a finger stroke is in flight must not
+    // leave the stroke machinery in a half-open state.
+    if (!enabled)
+        cancelFingerDrawStrokeIfActive();
+}
+
+bool DocumentViewport::fingerDrawingActive() const
+{
+    if (!m_fingerDrawingEnabled)
+        return false;
+    if (m_lastStylusActivityMs > 0 &&
+        QDateTime::currentMSecsSinceEpoch() - m_lastStylusActivityMs < 2000) {
+        return false;  // stylus used recently: keep touch for gestures
+    }
+    return true;
+}
+
+void DocumentViewport::cancelFingerDrawStrokeIfActive()
+{
+    if (!m_isDrawing)
+        return;
+    // The stroke was never committed (commit happens in finishStroke), so
+    // discarding the in-flight state is enough; the incremental preview
+    // disappears on the next repaint.
+    m_isDrawing = false;
+    m_currentStroke = VectorStroke();
+    m_currentStrokeCache = QPixmap();
+    update();
+}
+
 void DocumentViewport::setTouchGestureMode(TouchGestureMode mode)
 {
     if (m_touchHandler) {
@@ -5105,8 +5144,11 @@ bool DocumentViewport::event(QEvent* event)
             return QWidget::event(event);
         }
         
-        if (m_touchHandler && m_touchHandler->handleTouchEvent(touchEvent)) {
-            return true;
+        if (m_touchHandler) {
+            m_touchHandler->setFingerDrawingActive(fingerDrawingActive());
+            if (m_touchHandler->handleTouchEvent(touchEvent)) {
+                return true;
+            }
         }
     }
     
