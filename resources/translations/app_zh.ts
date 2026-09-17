@@ -1522,6 +1522,18 @@ This helps prevent accidental palm touches while writing. Only affects Y-Axis On
         <source>About</source>
         <translation type="unfinished">关于</translation>
     </message>
+    <message>
+        <source>Touch input</source>
+        <translation>触摸输入</translation>
+    </message>
+    <message>
+        <source>Allow finger drawing</source>
+        <translation>允许手指绘图</translation>
+    </message>
+    <message>
+        <source>When enabled, a single finger draws on the canvas (two fingers pan and zoom). Finger drawing pauses while the stylus is in use.</source>
+        <translation>启用后，单指可在画布上绘图（双指平移和缩放）。使用触控笔时暂停手指绘图。</translation>
+    </message>
 </context>
 <context>
     <name>CopyPagesToDocDialog</name>
