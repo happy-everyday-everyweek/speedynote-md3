@@ -123,6 +123,11 @@ public:
     void setTouchGestureMode(TouchGestureMode mode);
     void cycleTouchGestureMode(); // Cycle through: Disabled -> YAxisOnly -> Full -> Disabled
 
+    // Finger drawing (touch input draws when no stylus is active;
+    // single finger draws, two fingers pan/zoom).
+    bool isFingerDrawingEnabled() const;
+    void setFingerDrawingEnabled(bool enabled);
+
 #ifdef Q_OS_LINUX
     // Palm rejection (Linux only - Windows/macOS/Android have built-in palm rejection)
     bool isPalmRejectionEnabled() const;
@@ -940,6 +945,9 @@ private:
     // exactly once per process regardless of how many MainWindows are created;
     // each MainWindow still calls addAction() per migrated id so the QAction's
     // shortcut is registered in that window's shortcut map.
+    // Touch-as-pen: single-finger drawing while the stylus is idle.
+    bool m_fingerDrawingEnabled = false;
+
     static void wireQActionDispatchers();
 
 #ifdef Q_OS_LINUX
