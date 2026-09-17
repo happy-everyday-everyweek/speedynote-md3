@@ -16,6 +16,6 @@
         The attribute is ignored on older Android versions.
     -->
     <style name="Theme.SpeedyNote.Editor" parent="@android:style/Theme.DeviceDefault.NoActionBar">
-        <item name="android:windowOptOutEdgeToEdgeEnforcement" android:value="true"/>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 </resources>
