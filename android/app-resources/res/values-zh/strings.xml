@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_home_title">笔记本</string>
+    <string name="action_search">搜索</string>
+    <string name="search_hint">搜索笔记本</string>
+    <string name="fab_new">新建</string>
+    <string name="empty_title">暂无笔记本</string>
+    <string name="empty_subtitle">点按下方按钮，创建你的第一个笔记本</string>
+    <string name="sheet_title">新建笔记本</string>
+    <string name="sheet_edgeless_title">无边笔记本</string>
+    <string name="sheet_edgeless_sub">无限画布，自由书写</string>
+    <string name="sheet_paged_title">分页笔记本</string>
+    <string name="sheet_paged_sub">固定页面，适合书写与 PDF 批注</string>
+    <string name="sheet_pdf_title">从 PDF 新建</string>
+    <string name="sheet_pdf_sub">导入 PDF 并在其上书写</string>
+    <string name="sheet_open_title">打开笔记本文件</string>
+    <string name="sheet_open_sub">从存储中打开 .snb 笔记本</string>
+    <string name="badge_pdf">PDF</string>
+    <string name="badge_edgeless">无边</string>
+</resources>
