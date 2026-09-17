@@ -595,6 +595,7 @@ Java_org_speedynote_app_SpeedyNoteActivity_nativeHandleIntent(
 // Launcher Setup
 // ============================================================================
 
+#ifndef Q_OS_ANDROID  // The Qt Launcher is desktop-only; Android uses the native shell.
 static void connectLauncherSignals(Launcher* launcher)
 {
     // Helper to get or create MainWindow
@@ -714,6 +715,8 @@ static void showLauncherAtColdStart(Launcher* launcher)
 }
 
 #endif // Q_OS_ANDROID
+
+#endif // Q_OS_ANDROID  // end of Qt Launcher helpers (desktop only)
 
 // ============================================================================
 // Test Runners (Desktop Debug Builds Only)
@@ -1194,10 +1197,13 @@ int main(int argc, char* argv[])
     }
 
     // ========== Launch Application ==========
-    // Always create the Launcher upfront. On macOS this also show()s it
-    // briefly to prime NSApp activation; on other platforms it's hidden
-    // until a branch decides to surface it. See createLauncherForColdStart.
+    // The in-process Launcher is desktop-only. On macOS it is also shown
+    // briefly to prime NSApp activation; on other desktop platforms it
+    // stays hidden until a branch decides to surface it. Android uses the
+    // native LauncherActivity shell instead, so none is created there.
+#ifndef Q_OS_ANDROID
     auto* launcher = createLauncherForColdStart();
+#endif
 
     // Local helpers fold the per-branch platform-conditional registration
     // into one place. fileOpenFilter / inboxWatcher are local-to-main and
